@@ -19,16 +19,18 @@ public class SkinChangerConfig {
     }
 
     public static void load() {
-        if (!CONFIG_FILE.toFile().exists()) {
+        File configFile = CONFIG_FILE.toFile();
+        if (!configFile.exists()) {
             save();
             return;
         }
 
-        try (Reader reader = new FileReader(CONFIG_FILE.toFile())) {
+        try (Reader reader = new FileReader(configFile)) {
             config = GSON.fromJson(reader, ConfigData.class);
             if (config == null) config = new ConfigData();
         } catch (IOException e) {
             SkinChangerMod.LOGGER.error("Failed to load config", e);
+            config = new ConfigData();
         }
     }
 
