@@ -46,15 +46,6 @@ public class SkinChangerClient implements ClientModInitializer {
                 SkinChangerConfig.setCurrentSkin(skinFileName);
                 SkinChangerConfig.save();
                 
-                // Force skin refresh in 1.21.4
-                if (client.player != null) {
-                    client.player.clearCape();
-                    // Force skin reload by triggering a dummy skin change
-                    client.options.getPlayerModelParts().forEach(part -> {
-                        client.options.togglePlayerModelPart(part, true);
-                    });
-                }
-                
                 SkinChangerMod.LOGGER.info("Skin loaded: " + skinFileName);
             });
         } catch (IOException e) {
