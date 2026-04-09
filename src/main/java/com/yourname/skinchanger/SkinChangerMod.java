@@ -1,11 +1,9 @@
 package com.yourname.skinchanger;
 
+import com.yourname.skinchanger.config.SkinChangerConfig;
 import net.fabricmc.api.ModInitializer;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.texture.PlayerSkinProvider;
-import net.minecraft.client.util.SkinTextures;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
