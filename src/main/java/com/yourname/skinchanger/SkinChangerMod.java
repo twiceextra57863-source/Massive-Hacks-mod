@@ -15,7 +15,6 @@ public class SkinChangerMod implements ModInitializer {
     public void onInitialize() {
         LOGGER.info("Skin Changer Mod Initialized!");
         SkinChangerConfig.load();
-        
         ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
             applyCurrentSkin(client);
         });
