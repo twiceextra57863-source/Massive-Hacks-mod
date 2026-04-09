@@ -5,9 +5,7 @@ import com.yourname.skinchanger.SkinChangerMod;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.TextWidget;
 import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -15,7 +13,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SkinSelectScreen extends Screen {
-    private static final Identifier BACKGROUND = Identifier.ofVanilla("textures/gui/options_background.png");
     private final Screen parent;
     private List<String> availableSkins = new ArrayList<>();
     private int selectedIndex = -1;
@@ -44,14 +41,17 @@ public class SkinSelectScreen extends Screen {
             this.addDrawableChild(ButtonWidget.builder(Text.literal(skinName), button -> {
                 selectedIndex = index;
                 applySelectedSkin();
+                button.active = false; // Disable button after selection
             }).dimensions(this.width / 2 - 100, y, 200, 20).build());
             y += 25;
+            
+            if (y > this.height - 80) break; // Prevent overflow
         }
 
         // Refresh button
         this.addDrawableChild(ButtonWidget.builder(Text.literal("Refresh List"), button -> {
             refreshSkins();
-        }).dimensions(this.width / 2 - 50, y + 10, 100, 20).build());
+        }).dimensions(this.width / 2 - 50, this.height - 60, 100, 20).build());
     }
 
     private void loadAvailableSkins() {
@@ -66,12 +66,19 @@ public class SkinSelectScreen extends Screen {
                 }
             }
         }
+        
+        if (availableSkins.isEmpty()) {
+            availableSkins.add("No skins found!");
+        }
     }
 
     private void applySelectedSkin() {
         if (selectedIndex >= 0 && selectedIndex < availableSkins.size()) {
             String skinName = availableSkins.get(selectedIndex);
-            SkinChangerClient.loadSkin(this.client, skinName);
+            if (!skinName.equals("No skins found!")) {
+                SkinChangerClient.loadSkin(this.client, skinName);
+                SkinChangerMod.LOGGER.info("Applied skin: " + skinName);
+            }
         }
     }
 
@@ -91,15 +98,18 @@ public class SkinSelectScreen extends Screen {
         
         // Instructions
         context.drawCenteredTextWithShadow(this.textRenderer, 
-            Text.literal("Place your skin PNG files in: config/skinchanger/skins/"), 
+            Text.literal("Place PNG skins in: config/skinchanger/skins/"), 
             this.width / 2, 35, 0xAAAAAA);
         
+        // Current skin info
+        String currentSkin = com.yourname.skinchanger.config.SkinChangerConfig.getCurrentSkin();
+        if (!currentSkin.isEmpty()) {
+            context.drawCenteredTextWithShadow(this.textRenderer, 
+                Text.literal("Current: " + currentSkin), 
+                this.width / 2, this.height - 90, 0x55FF55);
+        }
+        
         super.render(context, mouseX, mouseY, delta);
-    }
-
-    @Override
-    public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
-        super.renderBackground(context, mouseX, mouseY, delta);
     }
 
     @Override
