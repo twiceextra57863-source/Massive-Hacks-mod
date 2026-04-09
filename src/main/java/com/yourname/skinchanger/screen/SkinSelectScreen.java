@@ -1,7 +1,5 @@
 package com.yourname.skinchanger.screen;
 
-package com.yourname.skinchanger.screen;
-
 import com.yourname.skinchanger.SkinChangerClient;
 import com.yourname.skinchanger.SkinChangerMod;
 import com.yourname.skinchanger.config.SkinChangerConfig;
@@ -9,6 +7,7 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.text.Text;
+
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -31,18 +30,15 @@ public class SkinSelectScreen extends Screen {
         super.init();
         loadAvailableSkins();
         
-        // Back button
         this.addDrawableChild(ButtonWidget.builder(Text.literal("Back"), button -> {
             this.client.setScreen(parent);
         }).dimensions(this.width / 2 - 100, this.height - 30, 200, 20).build());
 
-        // Skin selection buttons
         int y = 50;
         for (int i = 0; i < availableSkins.size(); i++) {
             String skinName = availableSkins.get(i);
             final int index = i;
             
-            // Highlight current skin
             boolean isCurrent = skinName.equals(SkinChangerConfig.getCurrentSkin());
             Text buttonText = Text.literal(skinName + (isCurrent ? " (Current)" : ""));
             
@@ -52,21 +48,16 @@ public class SkinSelectScreen extends Screen {
             }).dimensions(this.width / 2 - 100, y, 200, 20).build());
             y += 25;
             
-            if (y > this.height - 80) break; // Prevent overflow
+            if (y > this.height - 80) break;
         }
 
-        // Refresh button
         this.addDrawableChild(ButtonWidget.builder(Text.literal("Refresh List"), button -> {
             refreshSkins();
         }).dimensions(this.width / 2 - 50, this.height - 60, 100, 20).build());
         
-        // Reset to default button
         this.addDrawableChild(ButtonWidget.builder(Text.literal("Reset to Default"), button -> {
             SkinChangerConfig.setCurrentSkin("");
             SkinChangerConfig.save();
-            if (this.client != null && this.client.player != null) {
-                SkinChangerMod.LOGGER.info("Reset to default skin");
-            }
             refreshSkins();
         }).dimensions(this.width / 2 - 100, this.height - 90, 200, 20).build());
     }
@@ -109,16 +100,11 @@ public class SkinSelectScreen extends Screen {
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         this.renderBackground(context, mouseX, mouseY, delta);
-        
-        // Title
         context.drawCenteredTextWithShadow(this.textRenderer, this.title, 
             this.width / 2, 20, 0xFFFFFF);
-        
-        // Instructions
         context.drawCenteredTextWithShadow(this.textRenderer, 
             Text.literal("Place PNG skins in: config/skinchanger/skins/"), 
             this.width / 2, 35, 0xAAAAAA);
-        
         super.render(context, mouseX, mouseY, delta);
     }
 
