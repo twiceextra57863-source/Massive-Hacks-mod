@@ -16,8 +16,10 @@ public abstract class TitleScreenMixin extends Screen {
         super(title);
     }
 
-    @Inject(method = "initWidgetsNormal", at = @At("RETURN"))
-    private void addSkinButton(int y, int spacingY, CallbackInfo ci) {
+    @Inject(method = "init", at = @At("RETURN"))
+    private void addSkinButton(CallbackInfo ci) {
+        int y = this.height / 4 + 48;
+        
         this.addDrawableChild(ButtonWidget.builder(
             Text.literal("Change Skin"), 
             button -> {
@@ -25,7 +27,7 @@ public abstract class TitleScreenMixin extends Screen {
                     this.client.setScreen(new SkinSelectScreen(this));
                 }
             })
-            .dimensions(this.width / 2 - 100, y + spacingY * 2, 200, 20)
+            .dimensions(this.width / 2 - 100, y + 72, 200, 20)
             .build());
     }
 }
