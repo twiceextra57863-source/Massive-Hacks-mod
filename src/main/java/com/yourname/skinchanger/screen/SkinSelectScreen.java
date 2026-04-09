@@ -1,7 +1,10 @@
 package com.yourname.skinchanger.screen;
 
+package com.yourname.skinchanger.screen;
+
 import com.yourname.skinchanger.SkinChangerClient;
 import com.yourname.skinchanger.SkinChangerMod;
+import com.yourname.skinchanger.config.SkinChangerConfig;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
@@ -38,10 +41,14 @@ public class SkinSelectScreen extends Screen {
         for (int i = 0; i < availableSkins.size(); i++) {
             String skinName = availableSkins.get(i);
             final int index = i;
-            this.addDrawableChild(ButtonWidget.builder(Text.literal(skinName), button -> {
+            
+            // Highlight current skin
+            boolean isCurrent = skinName.equals(SkinChangerConfig.getCurrentSkin());
+            Text buttonText = Text.literal(skinName + (isCurrent ? " (Current)" : ""));
+            
+            this.addDrawableChild(ButtonWidget.builder(buttonText, button -> {
                 selectedIndex = index;
                 applySelectedSkin();
-                button.active = false; // Disable button after selection
             }).dimensions(this.width / 2 - 100, y, 200, 20).build());
             y += 25;
             
@@ -52,6 +59,16 @@ public class SkinSelectScreen extends Screen {
         this.addDrawableChild(ButtonWidget.builder(Text.literal("Refresh List"), button -> {
             refreshSkins();
         }).dimensions(this.width / 2 - 50, this.height - 60, 100, 20).build());
+        
+        // Reset to default button
+        this.addDrawableChild(ButtonWidget.builder(Text.literal("Reset to Default"), button -> {
+            SkinChangerConfig.setCurrentSkin("");
+            SkinChangerConfig.save();
+            if (this.client != null && this.client.player != null) {
+                SkinChangerMod.LOGGER.info("Reset to default skin");
+            }
+            refreshSkins();
+        }).dimensions(this.width / 2 - 100, this.height - 90, 200, 20).build());
     }
 
     private void loadAvailableSkins() {
@@ -78,6 +95,7 @@ public class SkinSelectScreen extends Screen {
             if (!skinName.equals("No skins found!")) {
                 SkinChangerClient.loadSkin(this.client, skinName);
                 SkinChangerMod.LOGGER.info("Applied skin: " + skinName);
+                refreshSkins();
             }
         }
     }
@@ -100,14 +118,6 @@ public class SkinSelectScreen extends Screen {
         context.drawCenteredTextWithShadow(this.textRenderer, 
             Text.literal("Place PNG skins in: config/skinchanger/skins/"), 
             this.width / 2, 35, 0xAAAAAA);
-        
-        // Current skin info
-        String currentSkin = com.yourname.skinchanger.config.SkinChangerConfig.getCurrentSkin();
-        if (!currentSkin.isEmpty()) {
-            context.drawCenteredTextWithShadow(this.textRenderer, 
-                Text.literal("Current: " + currentSkin), 
-                this.width / 2, this.height - 90, 0x55FF55);
-        }
         
         super.render(context, mouseX, mouseY, delta);
     }
