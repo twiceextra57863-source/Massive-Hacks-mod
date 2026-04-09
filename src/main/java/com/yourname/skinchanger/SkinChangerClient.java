@@ -1,12 +1,10 @@
 package com.yourname.skinchanger;
 
+import com.yourname.skinchanger.config.SkinChangerConfig;
 import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.texture.NativeImageBackedTexture;
-import net.minecraft.client.texture.PlayerSkinProvider;
-import net.minecraft.client.util.SkinTextures;
 import net.minecraft.util.Identifier;
 import java.io.File;
 import java.io.FileInputStream;
@@ -45,23 +43,26 @@ public class SkinChangerClient implements ClientModInitializer {
                 client.getTextureManager().registerTexture(CUSTOM_SKIN, 
                     new NativeImageBackedTexture(image));
                 
-                PlayerSkinProvider skinProvider = client.getSkinProvider();
-                
-                // Skin apply karna (1.21.4 compatible way)
-                applyPlayerSkin(client);
-                
                 SkinChangerConfig.setCurrentSkin(skinFileName);
                 SkinChangerConfig.save();
+                
+                // Force skin refresh in 1.21.4
+                if (client.player != null) {
+                    client.player.clearCape();
+                    // Force skin reload by triggering a dummy skin change
+                    client.options.getPlayerModelParts().forEach(part -> {
+                        client.options.togglePlayerModelPart(part, true);
+                    });
+                }
+                
+                SkinChangerMod.LOGGER.info("Skin loaded: " + skinFileName);
             });
         } catch (IOException e) {
             SkinChangerMod.LOGGER.error("Failed to load skin: " + skinFileName, e);
         }
     }
-
-    private static void applyPlayerSkin(MinecraftClient client) {
-        if (client.player != null) {
-            // Reload player skin
-            client.player.reloadSkin();
-        }
+    
+    public static Identifier getCustomSkin() {
+        return CUSTOM_SKIN;
     }
 }
