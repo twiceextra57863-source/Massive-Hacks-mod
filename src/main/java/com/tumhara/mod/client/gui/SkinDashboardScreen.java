@@ -31,15 +31,11 @@ public class SkinDashboardScreen extends Screen {
     private boolean isLoading = false;
     private float rotationAngle = 0;
     private PlayerEntity previewPlayer;
-    private int activeTab = 0; // 0=URL, 1=Username
+    private int activeTab = 0;
     
-    // Colors
     private static final int COLOR_BORDER = 0xFFD4AF37;
     private static final int COLOR_BORDER_GLOW = 0xFFFFD700;
-    private static final int COLOR_BG = 0xAA000000;
     private static final int COLOR_PANEL = 0xCC1A1A1A;
-    private static final int COLOR_BUTTON = 0xFF333333;
-    private static final int COLOR_BUTTON_HOVER = 0xFFD4AF37;
     
     public SkinDashboardScreen(Screen parent) {
         super(Text.literal(""));
@@ -65,7 +61,6 @@ public class SkinDashboardScreen extends Screen {
         int centerX = this.width / 2;
         int centerY = this.height / 2;
         
-        // URL Field
         this.urlField = new TextFieldWidget(
             this.textRenderer,
             centerX - 120,
@@ -78,7 +73,6 @@ public class SkinDashboardScreen extends Screen {
         this.urlField.setVisible(true);
         this.addDrawableChild(this.urlField);
         
-        // Username Field
         this.usernameField = new TextFieldWidget(
             this.textRenderer,
             centerX - 120,
@@ -91,79 +85,42 @@ public class SkinDashboardScreen extends Screen {
         this.usernameField.setVisible(false);
         this.addDrawableChild(this.usernameField);
         
-        // Tab Buttons
-        this.addDrawableChild(createButton(
-            centerX - 120,
-            centerY + 25,
-            115,
-            28,
-            "FROM URL",
-            activeTab == 0,
+        this.addDrawableChild(ButtonWidget.builder(
+            Text.literal(activeTab == 0 ? "§6§l> FROM URL §6§l<" : "§7FROM URL"),
             button -> {
                 activeTab = 0;
                 urlField.setVisible(true);
                 usernameField.setVisible(false);
-                updateButtonStyles();
+                this.clearChildren();
+                this.init();
             }
-        ));
+        ).dimensions(centerX - 120, centerY + 25, 115, 28).build());
         
-        this.addDrawableChild(createButton(
-            centerX + 5,
-            centerY + 25,
-            115,
-            28,
-            "FROM NAME",
-            activeTab == 1,
+        this.addDrawableChild(ButtonWidget.builder(
+            Text.literal(activeTab == 1 ? "§6§l> FROM NAME §6§l<" : "§7FROM NAME"),
             button -> {
                 activeTab = 1;
                 urlField.setVisible(false);
                 usernameField.setVisible(true);
-                updateButtonStyles();
+                this.clearChildren();
+                this.init();
             }
-        ));
+        ).dimensions(centerX + 5, centerY + 25, 115, 28).build());
         
-        // Action Buttons
-        this.addDrawableChild(createButton(
-            centerX - 120,
-            centerY + 100,
-            115,
-            32,
-            "FETCH SKIN",
-            false,
+        this.addDrawableChild(ButtonWidget.builder(
+            Text.literal("§eFETCH SKIN"),
             button -> fetchSkin()
-        ));
+        ).dimensions(centerX - 120, centerY + 100, 115, 32).build());
         
-        this.addDrawableChild(createButton(
-            centerX + 5,
-            centerY + 100,
-            115,
-            32,
-            "RESET",
-            false,
+        this.addDrawableChild(ButtonWidget.builder(
+            Text.literal("§cRESET"),
             button -> resetSkin()
-        ));
+        ).dimensions(centerX + 5, centerY + 100, 115, 32).build());
         
-        this.addDrawableChild(createButton(
-            centerX - 55,
-            centerY + 145,
-            110,
-            28,
-            "CLOSE",
-            false,
+        this.addDrawableChild(ButtonWidget.builder(
+            Text.literal("§7CLOSE"),
             button -> close()
-        ));
-    }
-    
-    private ButtonWidget createButton(int x, int y, int width, int height, String text, boolean active, ButtonWidget.PressAction action) {
-        String displayText = active ? "§6§l> " + text + " §6§l<" : "§7" + text;
-        return ButtonWidget.builder(Text.literal(displayText), action)
-            .dimensions(x, y, width, height)
-            .build();
-    }
-    
-    private void updateButtonStyles() {
-        this.clearChildren();
-        this.init();
+        ).dimensions(centerX - 55, centerY + 145, 110, 28).build());
     }
     
     private void fetchSkin() {
@@ -173,7 +130,7 @@ public class SkinDashboardScreen extends Screen {
         
         new Thread(() -> {
             try {
-                Thread.sleep(1500); // Simulate fetch
+                Thread.sleep(1500);
                 MinecraftClient.getInstance().execute(() -> {
                     statusMessage = "§a✓ Skin fetched successfully!";
                     statusColor = 0x55FF55;
@@ -196,27 +153,20 @@ public class SkinDashboardScreen extends Screen {
     
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        // Clear background with transparency
         this.renderBackground(context, mouseX, mouseY, delta);
         
         int centerX = this.width / 2;
         int centerY = this.height / 2;
         
-        // Animated border glow
         long time = System.currentTimeMillis();
         float glow = (float) (Math.sin(time / 500.0) * 0.3 + 0.7);
         int borderColor = mixColor(COLOR_BORDER, COLOR_BORDER_GLOW, glow);
         
-        // Main Panel with transparency
-        fillGradient(context, centerX - 160, centerY - 130, centerX + 160, centerY + 190, COLOR_PANEL, COLOR_PANEL);
-        
-        // Animated Border
+        context.fill(centerX - 160, centerY - 130, centerX + 160, centerY + 190, COLOR_PANEL);
         drawAnimatedBorder(context, centerX - 160, centerY - 130, 320, 320, borderColor);
         
-        // Title with shine
         drawShinyText(context, "§6§lSKIN STUDIO", centerX, centerY - 105, 2.0f);
         
-        // Subtitle
         context.drawCenteredTextWithShadow(
             this.textRenderer,
             Text.literal("§7Change your Minecraft skin"),
@@ -225,16 +175,11 @@ public class SkinDashboardScreen extends Screen {
             0xAAAAAA
         );
         
-        // Divider
         context.fill(centerX - 130, centerY - 65, centerX + 130, centerY - 64, 0xFFD4AF37);
         
-        // 3D Player Model Render
         renderPlayerModel(context, centerX, centerY - 20, 80);
-        
-        // Rotating animation
         rotationAngle += 2;
         
-        // Input Labels
         context.drawTextWithShadow(
             this.textRenderer,
             Text.literal("§6◆ INPUT METHOD:"),
@@ -251,10 +196,8 @@ public class SkinDashboardScreen extends Screen {
             0xCCCCCC
         );
         
-        // Status Bar with shine
         drawStatusBar(context, centerX, centerY + 190);
         
-        // Status message
         context.drawCenteredTextWithShadow(
             this.textRenderer,
             Text.literal(statusMessage),
@@ -263,12 +206,10 @@ public class SkinDashboardScreen extends Screen {
             statusColor
         );
         
-        // Loading animation
         if (isLoading) {
             drawLoadingAnimation(context, centerX + 130, centerY + 115);
         }
         
-        // Hover effects for buttons
         renderButtonHoverEffects(context, mouseX, mouseY, centerX, centerY);
         
         super.render(context, mouseX, mouseY, delta);
@@ -283,8 +224,6 @@ public class SkinDashboardScreen extends Screen {
         matrices.translate(centerX, centerY + 10, 100);
         matrices.scale(size, size, size);
         matrices.multiply(new Vector3f(0, 1, 0).rotationDegrees(rotationAngle));
-        matrices.multiply(new Vector3f(1, 0, 0).rotationDegrees(0));
-        matrices.multiply(new Vector3f(0, 0, 1).rotationDegrees(0));
         
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
@@ -297,24 +236,20 @@ public class SkinDashboardScreen extends Screen {
             dispatcher.render(previewPlayer, 0, 0, 0, rotationAngle, 1.0f, matrices, immediate, LightmapTextureManager.MAX_LIGHT_COORDINATE);
             immediate.draw();
         } catch (Exception e) {
-            // Fallback - just draw placeholder
             context.drawCenteredTextWithShadow(this.textRenderer, Text.literal("§8[3D MODEL]"), centerX, centerY, 0x666666);
         }
         
         DiffuseLighting.enableGuiDepthLighting();
         RenderSystem.disableBlend();
-        
         matrices.pop();
     }
     
     private void drawAnimatedBorder(DrawContext context, int x, int y, int width, int height, int color) {
-        // Top border with shine
         context.fill(x, y, x + width, y + 2, color);
         context.fill(x, y + height - 2, x + width, y + height, color);
         context.fill(x, y, x + 2, y + height, color);
         context.fill(x + width - 2, y, x + width, y + height, color);
         
-        // Corner accents
         context.fill(x, y, x + 8, y + 1, 0xFFFFFFFF);
         context.fill(x + width - 8, y, x + width, y + 1, 0xFFFFFFFF);
         context.fill(x, y + height - 1, x + 8, y + height, 0xFFFFFFFF);
@@ -338,7 +273,6 @@ public class SkinDashboardScreen extends Screen {
     private void drawStatusBar(DrawContext context, int centerX, int y) {
         context.fill(centerX - 140, y - 15, centerX + 140, y + 5, 0x88000000);
         
-        // Shine effect on status bar
         long time = System.currentTimeMillis();
         int shineX = centerX - 140 + (int)((time % 2000) / 2000.0 * 280);
         context.fill(shineX, y - 15, shineX + 30, y + 5, 0x22FFFFFF);
@@ -352,24 +286,18 @@ public class SkinDashboardScreen extends Screen {
     }
     
     private void renderButtonHoverEffects(DrawContext context, int mouseX, int mouseY, int centerX, int centerY) {
-        // Check each button area and add glow effect
-        // Button areas: (centerX-120, centerY+25, 115, 28) and (centerX+5, centerY+25, 115, 28)
         if (mouseX >= centerX - 120 && mouseX <= centerX - 5 && mouseY >= centerY + 25 && mouseY <= centerY + 53) {
-            drawGlow(context, centerX - 120, centerY + 25, 115, 28);
+            context.fill(centerX - 122, centerY + 23, centerX - 3, centerY + 55, 0x33FFD700);
         }
         if (mouseX >= centerX + 5 && mouseX <= centerX + 120 && mouseY >= centerY + 25 && mouseY <= centerY + 53) {
-            drawGlow(context, centerX + 5, centerY + 25, 115, 28);
+            context.fill(centerX + 3, centerY + 23, centerX + 122, centerY + 55, 0x33FFD700);
         }
         if (mouseX >= centerX - 120 && mouseX <= centerX - 5 && mouseY >= centerY + 100 && mouseY <= centerY + 132) {
-            drawGlow(context, centerX - 120, centerY + 100, 115, 32);
+            context.fill(centerX - 122, centerY + 98, centerX - 3, centerY + 134, 0x33FFD700);
         }
         if (mouseX >= centerX + 5 && mouseX <= centerX + 120 && mouseY >= centerY + 100 && mouseY <= centerY + 132) {
-            drawGlow(context, centerX + 5, centerY + 100, 115, 32);
+            context.fill(centerX + 3, centerY + 98, centerX + 122, centerY + 134, 0x33FFD700);
         }
-    }
-    
-    private void drawGlow(DrawContext context, int x, int y, int width, int height) {
-        context.fill(x - 2, y - 2, x + width + 2, y + height + 2, 0x33FFD700);
     }
     
     private int mixColor(int color1, int color2, float ratio) {
@@ -391,13 +319,8 @@ public class SkinDashboardScreen extends Screen {
         return (a << 24) | (r << 16) | (g << 8) | b;
     }
     
-    private void fillGradient(DrawContext context, int x1, int y1, int x2, int y2, int colorStart, int colorEnd) {
-        context.fill(x1, y1, x2, y2, colorStart);
-    }
-    
     @Override
     public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
-        // Transparent background - just a dark overlay
         context.fill(0, 0, this.width, this.height, 0x99000000);
     }
     
@@ -410,6 +333,4 @@ public class SkinDashboardScreen extends Screen {
     public boolean shouldPause() {
         return false;
     }
-} getFile() { return file; }
-    }
-}
+            }
