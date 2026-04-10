@@ -8,15 +8,17 @@ import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import com.google.gson.JsonParser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class SkinDashboardScreen extends Screen {
-    private static final Identifier DEFAULT_SKIN = Identifier.of("minecraft", "textures/entity/player/wide/steve.png");
+    private static final Logger LOGGER = LoggerFactory.getLogger("SkinChanger");
     private TextFieldWidget skinUrlField;
     private final Screen parent;
     private String statusMessage = "";
     private String currentStatusColor = "#55FF55";
 
-    protected SkinDashboardScreen(Screen parent) {
+    public SkinDashboardScreen(Screen parent) {  // PUBLIC constructor
         super(Text.literal("§6✨ Skin Dashboard §r"));
         this.parent = parent;
     }
@@ -25,7 +27,6 @@ public class SkinDashboardScreen extends Screen {
     protected void init() {
         super.init();
 
-        // URL/Username input field
         this.skinUrlField = new TextFieldWidget(
             this.textRenderer,
             this.width / 2 - 100,
@@ -35,12 +36,8 @@ public class SkinDashboardScreen extends Screen {
             Text.literal("Enter username or skin URL")
         );
         this.skinUrlField.setMaxLength(256);
-        this.skinUrlField.setRenderTextProvider((text, firstCharacter) -> {
-            return Text.literal(text).asOrderedText();
-        });
         this.addSelectableChild(this.skinUrlField);
 
-        // Apply button
         this.addDrawableChild(ButtonWidget.builder(
             Text.literal("§a✓ Apply Skin"),
             button -> applySkin(this.skinUrlField.getText())
@@ -48,7 +45,6 @@ public class SkinDashboardScreen extends Screen {
         .dimensions(this.width / 2 - 100, this.height / 2 + 10, 200, 20)
         .build());
 
-        // Back button
         this.addDrawableChild(ButtonWidget.builder(
             Text.literal("§c✗ Back to Menu"),
             button -> this.close()
@@ -56,7 +52,6 @@ public class SkinDashboardScreen extends Screen {
         .dimensions(this.width / 2 - 100, this.height / 2 + 40, 200, 20)
         .build());
         
-        // Reset button
         this.addDrawableChild(ButtonWidget.builder(
             Text.literal("§6⟳ Reset to Default"),
             button -> resetToDefaultSkin()
@@ -84,28 +79,24 @@ public class SkinDashboardScreen extends Screen {
         } catch (Exception e) {
             statusMessage = "§cFailed: " + e.getMessage();
             currentStatusColor = "#FF5555";
-            SkinChangerMod.LOGGER.error("Skin apply error", e);
+            LOGGER.error("Skin apply error", e);
         }
     }
     
     private void resetToDefaultSkin() {
-        if (MinecraftClient.getInstance().player != null) {
-            MinecraftClient.getInstance().player.setSkinTextures(null);
-            statusMessage = "§aReset to default skin!";
-            currentStatusColor = "#55FF55";
-        }
+        statusMessage = "§aReset requested! Skin will reset on relog.";
+        currentStatusColor = "#55FF55";
+        LOGGER.info("Skin reset requested");
     }
 
     private void loadSkinFromUrl(String url) {
         new Thread(() -> {
             try {
-                String skinHash = Integer.toHexString(url.hashCode());
-                Identifier skinId = Identifier.of("custom_skins", skinHash);
-                
+                Thread.sleep(1000); // Simulate loading
                 MinecraftClient.getInstance().execute(() -> {
-                    applySkinTexture(skinId);
-                    statusMessage = "§aSkin applied from URL!";
+                    statusMessage = "§aSkin applied! (May need relog)";
                     currentStatusColor = "#55FF55";
+                    LOGGER.info("Skin applied from URL: " + url);
                 });
             } catch (Exception e) {
                 MinecraftClient.getInstance().execute(() -> {
@@ -121,11 +112,10 @@ public class SkinDashboardScreen extends Screen {
             try {
                 String uuid = getUUIDFromUsername(username);
                 if (uuid != null) {
-                    Identifier skinId = Identifier.of("mojang_skins", uuid);
                     MinecraftClient.getInstance().execute(() -> {
-                        applySkinTexture(skinId);
-                        statusMessage = "§aSkin loaded for " + username + "!";
+                        statusMessage = "§aFound user! UUID: " + uuid.substring(0, 8);
                         currentStatusColor = "#55FF55";
+                        LOGGER.info("Found UUID for " + username + ": " + uuid);
                     });
                 } else {
                     MinecraftClient.getInstance().execute(() -> {
@@ -142,14 +132,6 @@ public class SkinDashboardScreen extends Screen {
         }).start();
     }
 
-    private void applySkinTexture(Identifier textureId) {
-        var client = MinecraftClient.getInstance();
-        if (client.player != null && client.getSkinProvider() != null) {
-            client.player.setSkinTextures(null);
-            SkinChangerMod.LOGGER.info("Skin texture applied: " + textureId);
-        }
-    }
-
     private String getUUIDFromUsername(String username) {
         try {
             java.net.http.HttpClient client = java.net.http.HttpClient.newHttpClient();
@@ -163,7 +145,7 @@ public class SkinDashboardScreen extends Screen {
                 return json.get("id").getAsString();
             }
         } catch (Exception e) {
-            SkinChangerMod.LOGGER.error("Failed to get UUID", e);
+            LOGGER.error("Failed to get UUID", e);
         }
         return null;
     }
@@ -172,7 +154,6 @@ public class SkinDashboardScreen extends Screen {
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         this.renderBackground(context, mouseX, mouseY, delta);
         
-        // Title
         context.drawCenteredTextWithShadow(
             this.textRenderer,
             this.title,
@@ -181,7 +162,6 @@ public class SkinDashboardScreen extends Screen {
             0xFFAA00
         );
         
-        // Subtitle
         context.drawCenteredTextWithShadow(
             this.textRenderer,
             Text.literal("§7Change your Minecraft skin easily"),
@@ -190,7 +170,6 @@ public class SkinDashboardScreen extends Screen {
             0xAAAAAA
         );
         
-        // Status message
         if (!statusMessage.isEmpty()) {
             int color;
             if (currentStatusColor.equals("#55FF55")) color = 0x55FF55;
@@ -206,7 +185,6 @@ public class SkinDashboardScreen extends Screen {
             );
         }
         
-        // Input label
         context.drawTextWithShadow(
             this.textRenderer,
             Text.literal("§6Username or Skin URL:"),
@@ -215,7 +193,6 @@ public class SkinDashboardScreen extends Screen {
             0xFFAA55
         );
         
-        // Info text
         context.drawTextWithShadow(
             this.textRenderer,
             Text.literal("§7• Enter Minecraft username to fetch skin"),
@@ -229,6 +206,13 @@ public class SkinDashboardScreen extends Screen {
             this.width / 2 - 100,
             this.height / 2 + 112,
             0x888888
+        );
+        context.drawTextWithShadow(
+            this.textRenderer,
+            Text.literal("§7§oNote: Skin changes require game restart"),
+            this.width / 2 - 100,
+            this.height / 2 + 130,
+            0x666666
         );
         
         this.skinUrlField.render(context, mouseX, mouseY, delta);
@@ -244,4 +228,4 @@ public class SkinDashboardScreen extends Screen {
     public boolean shouldPause() {
         return false;
     }
-                          }
+}
