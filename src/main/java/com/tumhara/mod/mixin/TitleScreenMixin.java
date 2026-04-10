@@ -20,41 +20,20 @@ public abstract class TitleScreenMixin extends Screen {
 
     @Inject(method = "init", at = @At("TAIL"))
     private void addSkinButton(CallbackInfo ci) {
-        int buttonWidth = 120;
-        int buttonHeight = 24;
+        TitleScreen screen = (TitleScreen) (Object) this;
         
-        // Right side buttons positioning
-        int x = this.width - buttonWidth - 24;
-        int y = this.height / 4 + 48;
-        
-        // Main Skin Button with Minecraft style
+        // Professional button at top right
         ButtonWidget skinButton = ButtonWidget.builder(
-            Text.literal("§6§l✦ SKIN STUDIO"),
+            Text.literal("§6§l[ SKIN STUDIO ]"),
             button -> {
                 MinecraftClient.getInstance().setScreen(
-                    new SkinDashboardScreen(this)
+                    new SkinDashboardScreen(screen)
                 );
             }
         )
-        .dimensions(x, y, buttonWidth, buttonHeight)
+        .dimensions(screen.width - 110, 10, 100, 22)
         .build();
         
-        // Quick Reset Button
-        ButtonWidget resetButton = ButtonWidget.builder(
-            Text.literal("§c§l⟳ RESET"),
-            button -> {
-                if (MinecraftClient.getInstance().player != null) {
-                    MinecraftClient.getInstance().player.sendMessage(
-                        Text.literal("§a✓ Skin reset to default!"), 
-                        true
-                    );
-                }
-            }
-        )
-        .dimensions(x, y + 28, buttonWidth, buttonHeight)
-        .build();
-        
-        this.addDrawableChild(skinButton);
-        this.addDrawableChild(resetButton);
+        screen.addDrawableChild(skinButton);
     }
 }
