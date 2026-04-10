@@ -1,27 +1,40 @@
-package net.yourname.pvpmod.mixin;
+package net.yourname.pvpmod;
 
-import net.minecraft.client.gui.screen.GameMenuScreen;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.text.Text;
-import net.yourname.pvpmod.screen.DashboardScreen;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.render.Camera;
+import net.minecraft.client.render.GameRenderer;
+import org.joml.Matrix4f;
+import net.yourname.pvpmod.config.ConfigManager;
+import net.yourname.pvpmod.indicator.PlayerIndicator;
 
-@Mixin(GameMenuScreen.class)
-public class PauseScreenMixin {
+public class PvPModClient implements ClientModInitializer {
     
-    @Inject(method = "init", at = @At("TAIL"))
-    private void addDashboardButton(CallbackInfo ci) {
-        GameMenuScreen screen = (GameMenuScreen) (Object) this;
-        assert screen.client != null;
+    @Override
+    public void onInitializeClient() {
+        ConfigManager.get();
         
-        // Add button in pause menu
-        screen.addDrawableChild(ButtonWidget.builder(
-                Text.literal("⚙️ PvP Settings"),
-                btn -> screen.client.setScreen(new DashboardScreen(screen)))
-            .dimensions(screen.width / 2 - 100, screen.height / 4 + 120, 200, 20)
-            .build());
+        // Register HUD renderer
+        HudRenderCallback.EVENT.register((ctx, tickDelta) -> {
+            MinecraftClient mc = MinecraftClient.getInstance();
+            if (mc.options.hudHidden || mc.world == null || mc.player == null) return;
+            
+            Camera camera = mc.gameRenderer.getCamera();
+            if (camera.isThirdPerson()) return;
+            
+            // ✅ Get matrices properly for 1.21.4
+            GameRenderer renderer = mc.gameRenderer;
+            Matrix4f view = new Matrix4f(renderer.getBacklight().getModelViewMatrix());
+            Matrix4f proj = new Matrix4f(renderer.getProjectionMatrix());
+            
+            PlayerIndicator.renderAll(ctx, mc, camera, view, proj);
+        });
+        
+        // Clear cache on world change
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            if (client.world == null) PlayerIndicator.clearCache();
+        });
     }
 }
