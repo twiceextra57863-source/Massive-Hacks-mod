@@ -12,7 +12,6 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.FileReader;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import com.google.gson.JsonObject;
@@ -26,11 +25,13 @@ public class SkinDashboardScreen extends Screen {
     private static final File CURRENT_SKIN_FILE = new File(CONFIG_DIR, "current_skin.json");
     
     private List<SkinEntry> availableSkins = new ArrayList<>();
+    private List<SkinEntry> filteredSkins = new ArrayList<>();
     private int scrollOffset = 0;
     private int selectedSkinIndex = -1;
     private String statusMessage = "§7Select a skin to apply";
     private int statusColor = 0xAAAAAA;
     private TextFieldWidget searchField;
+    private String searchQuery = "";
     
     // Colors
     private static final int COLOR_BG = 0xDD1A1A1A;
@@ -40,14 +41,14 @@ public class SkinDashboardScreen extends Screen {
     private static final int COLOR_SELECTED = 0x88FFAA33;
     private static final int COLOR_HOVER = 0x44FFFFFF;
     
+    private final Screen parent;
+    
     public SkinDashboardScreen(Screen parent) {
         super(Text.literal(""));
         this.parent = parent;
         initDirectories();
         scanForSkins();
     }
-    
-    private final Screen parent;
     
     private void initDirectories() {
         if (!CONFIG_DIR.exists()) CONFIG_DIR.mkdirs();
@@ -75,6 +76,10 @@ public class SkinDashboardScreen extends Screen {
         availableSkins.add(new SkinEntry("Default Steve", "default", 
             Identifier.of("minecraft", "textures/entity/player/wide/steve.png"), null));
         
+        // Add default Alex skin
+        availableSkins.add(new SkinEntry("Default Alex", "default_alex", 
+            Identifier.of("minecraft", "textures/entity/player/wide/alex.png"), null));
+        
         // Scan skins folder
         File[] skinFiles = SKINS_DIR.listFiles((dir, name) -> name.toLowerCase().endsWith(".png"));
         if (skinFiles != null) {
@@ -85,7 +90,22 @@ public class SkinDashboardScreen extends Screen {
             }
         }
         
+        updateFilteredSkins();
         loadCurrentSkin();
+    }
+    
+    private void updateFilteredSkins() {
+        filteredSkins.clear();
+        if (searchQuery.isEmpty()) {
+            filteredSkins.addAll(availableSkins);
+        } else {
+            for (SkinEntry skin : availableSkins) {
+                if (skin.getName().toLowerCase().contains(searchQuery.toLowerCase())) {
+                    filteredSkins.add(skin);
+                }
+            }
+        }
+        scrollOffset = 0;
     }
     
     private void loadCurrentSkin() {
@@ -93,8 +113,8 @@ public class SkinDashboardScreen extends Screen {
             try (FileReader reader = new FileReader(CURRENT_SKIN_FILE)) {
                 JsonObject json = JsonParser.parseReader(reader).getAsJsonObject();
                 String lastSkin = json.get("last_skin").getAsString();
-                for (int i = 0; i < availableSkins.size(); i++) {
-                    if (availableSkins.get(i).getName().equals(lastSkin)) {
+                for (int i = 0; i < filteredSkins.size(); i++) {
+                    if (filteredSkins.get(i).getName().equals(lastSkin)) {
                         selectedSkinIndex = i;
                         break;
                     }
@@ -117,82 +137,21 @@ public class SkinDashboardScreen extends Screen {
         }
     }
     
-    @Override
-    protected void init() {
-        super.init();
-        
-        int centerX = this.width / 2;
-        int centerY = this.height / 2;
-        
-        // Title
-        this.addDrawableChild(ButtonWidget.builder(
-            Text.literal("§6§lSKIN STUDIO"),
-            button -> {}
-        ).dimensions(centerX - 60, 10, 120, 20).build());
-        
-        // Search Field
-        this.searchField = new TextFieldWidget(
-            this.textRenderer,
-            centerX - 100,
-            40,
-            200,
-            18,
-            Text.literal("Search skins...")
-        );
-        this.addDrawableChild(this.searchField);
-        
-        // Apply Button
-        this.addDrawableChild(ButtonWidget.builder(
-            Text.literal("§a✓ APPLY SKIN"),
-            button -> applySelectedSkin()
-        )
-        .dimensions(centerX - 100, this.height - 50, 95, 24)
-        .build());
-        
-        // Refresh Button
-        this.addDrawableChild(ButtonWidget.builder(
-            Text.literal("§6⟳ REFRESH"),
-            button -> {
-                scanForSkins();
-                statusMessage = "§aScanned " + availableSkins.size() + " skins!";
-                statusColor = 0x55FF55;
-            }
-        )
-        .dimensions(centerX + 5, this.height - 50, 95, 24)
-        .build());
-        
-        // Close Button
-        this.addDrawableChild(ButtonWidget.builder(
-            Text.literal("§c✖ CLOSE"),
-            button -> close()
-        )
-        .dimensions(this.width - 60, 10, 50, 20)
-        .build());
-        
-        // Open Folder Button
-        this.addDrawableChild(ButtonWidget.builder(
-            Text.literal("§b📁 OPEN SKINS FOLDER"),
-            button -> openSkinsFolder()
-        )
-        .dimensions(10, 10, 120, 20)
-        .build());
-    }
-    
     private void applySelectedSkin() {
-        if (selectedSkinIndex < 0 || selectedSkinIndex >= availableSkins.size()) {
+        if (selectedSkinIndex < 0 || selectedSkinIndex >= filteredSkins.size()) {
             statusMessage = "§cPlease select a skin first!";
             statusColor = 0xFF5555;
             return;
         }
         
-        SkinEntry skin = availableSkins.get(selectedSkinIndex);
+        SkinEntry skin = filteredSkins.get(selectedSkinIndex);
         statusMessage = "§a✓ Applied: " + skin.getName();
         statusColor = 0x55FF55;
         saveCurrentSkin(skin.getName());
         
         if (MinecraftClient.getInstance().player != null) {
             MinecraftClient.getInstance().player.sendMessage(
-                Text.literal("§a✓ Skin changed to §6" + skin.getName()), 
+                Text.literal("§a✓ Skin changed to §6" + skin.getName() + "§a! Restart to see effect"), 
                 true
             );
         }
@@ -210,65 +169,131 @@ public class SkinDashboardScreen extends Screen {
     }
     
     @Override
+    protected void init() {
+        super.init();
+        
+        int centerX = this.width / 2;
+        
+        // Search Field
+        this.searchField = new TextFieldWidget(
+            this.textRenderer,
+            centerX - 100,
+            45,
+            200,
+            20,
+            Text.literal("Search skins...")
+        );
+        this.searchField.setChangedListener(text -> {
+            searchQuery = text;
+            updateFilteredSkins();
+        });
+        this.addDrawableChild(this.searchField);
+        
+        // Apply Button
+        this.addDrawableChild(ButtonWidget.builder(
+            Text.literal("§a✓ APPLY SKIN"),
+            button -> applySelectedSkin()
+        )
+        .dimensions(centerX - 100, this.height - 45, 95, 22)
+        .build());
+        
+        // Refresh Button
+        this.addDrawableChild(ButtonWidget.builder(
+            Text.literal("§6⟳ REFRESH"),
+            button -> {
+                scanForSkins();
+                statusMessage = "§aScanned " + availableSkins.size() + " skins!";
+                statusColor = 0x55FF55;
+            }
+        )
+        .dimensions(centerX + 5, this.height - 45, 95, 22)
+        .build());
+        
+        // Close Button
+        this.addDrawableChild(ButtonWidget.builder(
+            Text.literal("§c✖ CLOSE"),
+            button -> close()
+        )
+        .dimensions(this.width - 55, 10, 45, 20)
+        .build());
+        
+        // Open Folder Button
+        this.addDrawableChild(ButtonWidget.builder(
+            Text.literal("§b📁 OPEN FOLDER"),
+            button -> openSkinsFolder()
+        )
+        .dimensions(10, 10, 100, 20)
+        .build());
+    }
+    
+    @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         // Background
         context.fill(0, 0, this.width, this.height, COLOR_BG);
         
         int centerX = this.width / 2;
-        int startY = 70;
-        int skinSize = 80;
-        int skinsPerRow = Math.max(1, (this.width - 100) / (skinSize + 20));
-        int rowHeight = skinSize + 30;
+        int startY = 80;
+        int skinSize = 70;
+        int skinsPerRow = Math.max(1, (this.width - 100) / (skinSize + 15));
+        int rowHeight = skinSize + 35;
         
         // Title Bar
-        context.fill(0, 0, this.width, 35, COLOR_ACCENT);
+        context.fill(0, 0, this.width, 38, COLOR_ACCENT);
         context.drawCenteredTextWithShadow(
             this.textRenderer,
             Text.literal("§l§0✧ SKIN STUDIO ✧"),
             centerX,
-            12,
+            14,
             0xFFFFFF
         );
         
-        // Search Section
+        // Search Label
         context.drawTextWithShadow(
             this.textRenderer,
             Text.literal("§7Search:"),
-            centerX - 120,
-            43,
+            centerX - 115,
+            49,
             0xAAAAAA
         );
         
         // Skin Grid
         int visibleRows = (this.height - 150) / rowHeight;
         int startIndex = scrollOffset * skinsPerRow;
-        int endIndex = Math.min(startIndex + (visibleRows * skinsPerRow), availableSkins.size());
+        int endIndex = Math.min(startIndex + (visibleRows * skinsPerRow), filteredSkins.size());
         
         for (int i = startIndex; i < endIndex; i++) {
-            SkinEntry skin = availableSkins.get(i);
+            SkinEntry skin = filteredSkins.get(i);
             int row = (i - startIndex) / skinsPerRow;
             int col = (i - startIndex) % skinsPerRow;
-            int x = 50 + col * (skinSize + 20);
+            int x = 40 + col * (skinSize + 15);
             int y = startY + row * rowHeight;
             
-            // Skin card background
             boolean isSelected = (i == selectedSkinIndex);
-            boolean isHovered = isMouseOver(mouseX, mouseY, x, y, skinSize, skinSize + 20);
+            boolean isHovered = mouseX >= x && mouseX <= x + skinSize && mouseY >= y && mouseY <= y + skinSize;
             
             // Card background
             int cardColor = isSelected ? COLOR_SELECTED : (isHovered ? COLOR_HOVER : COLOR_PANEL);
-            context.fill(x - 5, y - 5, x + skinSize + 5, y + skinSize + 25, cardColor);
+            context.fill(x - 3, y - 3, x + skinSize + 3, y + skinSize + 28, cardColor);
             
             // Card border
-            drawBorder(context, x - 5, y - 5, skinSize + 10, skinSize + 30, COLOR_BORDER);
+            drawBorder(context, x - 3, y - 3, skinSize + 6, skinSize + 31, COLOR_BORDER);
             
             // Skin preview area
-            context.fill(x, y, x + skinSize, y + skinSize, 0xFF333333);
-            drawBorder(context, x, y, skinSize, skinSize, 0xFF555555);
+            context.fill(x, y, x + skinSize, y + skinSize, 0xFF444444);
+            drawBorder(context, x, y, skinSize, skinSize, 0xFF888888);
+            
+            // Skin preview placeholder
+            context.drawCenteredTextWithShadow(
+                this.textRenderer,
+                Text.literal("§8[SKIN]"),
+                x + skinSize / 2,
+                y + skinSize / 2 - 4,
+                0x888888
+            );
             
             // Skin name
             String displayName = skin.getName();
-            if (displayName.length() > 15) displayName = displayName.substring(0, 12) + "...";
+            if (displayName.length() > 12) displayName = displayName.substring(0, 10) + "...";
             context.drawCenteredTextWithShadow(
                 this.textRenderer,
                 Text.literal(displayName),
@@ -278,7 +303,7 @@ public class SkinDashboardScreen extends Screen {
             );
             
             // Click handling
-            if (isHovered && mouseY < y + skinSize + 20) {
+            if (isHovered && mouseY < y + skinSize + 5) {
                 if (mouseY > y && mouseY < y + skinSize) {
                     selectedSkinIndex = i;
                     statusMessage = "§eSelected: " + skin.getName();
@@ -288,42 +313,45 @@ public class SkinDashboardScreen extends Screen {
         }
         
         // Status Bar
-        context.fill(0, this.height - 30, this.width, this.height, 0xCC000000);
+        context.fill(0, this.height - 28, this.width, this.height, 0xCC000000);
         context.drawTextWithShadow(
             this.textRenderer,
             Text.literal(statusMessage),
             10,
-            this.height - 23,
+            this.height - 22,
             statusColor
         );
         
         // Skin count
         context.drawTextWithShadow(
             this.textRenderer,
-            Text.literal("§7Skins: §e" + availableSkins.size()),
+            Text.literal("§7Skins: §e" + filteredSkins.size()),
             this.width - 100,
-            this.height - 23,
+            this.height - 22,
             0xAAAAAA
         );
         
-        // Instructions
-        if (availableSkins.size() <= 1) {
+        // Instructions for empty folder
+        if (availableSkins.size() <= 2) {
             context.drawCenteredTextWithShadow(
                 this.textRenderer,
-                Text.literal("§7§oPlace .png files in " + SKINS_DIR.getAbsolutePath()),
+                Text.literal("§7§o📁 Place .png skin files in:"),
                 centerX,
                 this.height - 70,
                 0x666666
             );
+            context.drawCenteredTextWithShadow(
+                this.textRenderer,
+                Text.literal("§7§o" + SKINS_DIR.getAbsolutePath()),
+                centerX,
+                this.height - 58,
+                0x666666
+            );
         }
         
-        // Search field render
+        // Render search field
         this.searchField.render(context, mouseX, mouseY, delta);
         super.render(context, mouseX, mouseY, delta);
-    }
-    
-    private boolean isMouseOver(int mouseX, int mouseY, int x, int y, int width, int height) {
-        return mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY <= y + height;
     }
     
     private void drawBorder(DrawContext context, int x, int y, int width, int height, int color) {
@@ -335,9 +363,10 @@ public class SkinDashboardScreen extends Screen {
     
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
-        int skinsPerRow = Math.max(1, (this.width - 100) / 100);
-        int totalRows = (int) Math.ceil((double) availableSkins.size() / skinsPerRow);
-        int visibleRows = (this.height - 150) / 110;
+        int skinSize = 70;
+        int skinsPerRow = Math.max(1, (this.width - 100) / (skinSize + 15));
+        int totalRows = (int) Math.ceil((double) filteredSkins.size() / skinsPerRow);
+        int visibleRows = (this.height - 150) / (skinSize + 35);
         int maxScroll = Math.max(0, totalRows - visibleRows);
         
         scrollOffset -= (int) verticalAmount;
@@ -353,5 +382,25 @@ public class SkinDashboardScreen extends Screen {
     @Override
     public boolean shouldPause() {
         return false;
+    }
+    
+    // Inner class for skin entry
+    private static class SkinEntry {
+        private final String name;
+        private final String path;
+        private final Identifier textureId;
+        private final File file;
+        
+        public SkinEntry(String name, String path, Identifier textureId, File file) {
+            this.name = name;
+            this.path = path;
+            this.textureId = textureId;
+            this.file = file;
+        }
+        
+        public String getName() { return name; }
+        public String getPath() { return path; }
+        public Identifier getTextureId() { return textureId; }
+        public File getFile() { return file; }
     }
 }
