@@ -4,10 +4,13 @@
   "package": "net.yourname.pvpmod.mixin",
   "compatibilityLevel": "JAVA_21",
   "client": [
+    "ScreenAccessor",
     "TitleScreenMixin",
     "PauseScreenMixin"
   ],
   "injectors": {
     "defaultRequire": 1
-  }
+  },
+  "mixins": [
+  ]
 }
