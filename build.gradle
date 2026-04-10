@@ -5,13 +5,11 @@ plugins {
 
 version = project.mod_version
 group = project.maven_group
-
-base {
-    archivesName = project.archives_base_name
-}
+base { archivesName = project.archives_base_name }
 
 repositories {
-    // Add custom repos here if needed
+    maven { url 'https://maven.shedaniel.me/' }
+    maven { url 'https://maven.terraformersmc.com/releases/' }
 }
 
 dependencies {
@@ -19,16 +17,25 @@ dependencies {
     mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+    
+    // Optional: For prettier config GUI later
+    // modImplementation "me.shedaniel.cloth:cloth-config-fabric:15.0.140"
+    // modImplementation "com.terraformersmc:modmenu:12.0.0-beta.1"
+    
+    // Mixin for title/pause screen buttons
+    modImplementation include("io.github.llamalad7:mixinextras-fabric:0.4.1")
 }
 
 loom {
     splitEnvironmentSourceSets()
-    
     mods {
         "pvpmod" {
             sourceSet sourceSets.main
             sourceSet sourceSets.client
         }
+    }
+    mixin {
+        defaultRefmapName = "pvpmod.refmap.json"
     }
 }
 
@@ -50,7 +57,5 @@ java {
 }
 
 jar {
-    from("LICENSE") {
-        rename { "${it}_${project.archives_base_name}" }
-    }
+    from("LICENSE") { rename { "${it}_${project.archives_base_name}" } }
 }
