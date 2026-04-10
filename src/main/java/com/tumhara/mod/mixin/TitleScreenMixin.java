@@ -20,7 +20,6 @@ public abstract class TitleScreenMixin extends Screen {
 
     @Inject(method = "init", at = @At("TAIL"))
     private void addSkinButton(CallbackInfo ci) {
-        // Use 'this' directly because this mixin extends Screen
         ButtonWidget skinButton = ButtonWidget.builder(
             Text.literal("§6§l[ SKIN STUDIO ]"),
             button -> {
@@ -32,7 +31,6 @@ public abstract class TitleScreenMixin extends Screen {
         .dimensions(this.width - 110, 10, 100, 22)
         .build();
         
-        // 'this' is a Screen, so addDrawableChild works
         this.addDrawableChild(skinButton);
     }
 }
