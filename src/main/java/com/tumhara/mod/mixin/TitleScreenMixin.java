@@ -2,6 +2,7 @@ package com.tumhara.mod.mixin;
 
 import com.tumhara.mod.client.gui.SkinDashboardScreen;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.TitleScreen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.text.Text;
@@ -11,22 +12,25 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(TitleScreen.class)
-public class TitleScreenMixin {
+public abstract class TitleScreenMixin extends Screen {
+
+    protected TitleScreenMixin(Text title) {
+        super(title);
+    }
 
     @Inject(method = "init", at = @At("TAIL"))
     private void addSkinButton(CallbackInfo ci) {
-        TitleScreen screen = (TitleScreen) (Object) this;
         int buttonWidth = 100;
         int buttonHeight = 20;
-        int x = screen.width / 2 + 104;
-        int y = screen.height / 4 + 48 + 72;
+        int x = this.width / 2 + 104;
+        int y = this.height / 4 + 48 + 72;
         
         // Change Skin Button
         ButtonWidget skinButton = ButtonWidget.builder(
             Text.literal("§a✦ Change Skin"),
             button -> {
                 MinecraftClient.getInstance().setScreen(
-                    new SkinDashboardScreen(screen)
+                    new SkinDashboardScreen(this)
                 );
             }
         )
@@ -39,7 +43,7 @@ public class TitleScreenMixin {
             button -> {
                 if (MinecraftClient.getInstance().player != null) {
                     MinecraftClient.getInstance().player.sendMessage(
-                        Text.literal("§aFeature coming soon!"), 
+                        Text.literal("§aSkin reset requested!"), 
                         false
                     );
                 }
@@ -48,8 +52,8 @@ public class TitleScreenMixin {
         .dimensions(x, y + 24, buttonWidth, buttonHeight)
         .build();
         
-        // addDrawableChild is PUBLIC in Screen class - direct access
-        screen.addDrawableChild(skinButton);
-        screen.addDrawableChild(resetButton);
+        // Now 'this' is a Screen, so addDrawableChild is accessible
+        this.addDrawableChild(skinButton);
+        this.addDrawableChild(resetButton);
     }
 }
