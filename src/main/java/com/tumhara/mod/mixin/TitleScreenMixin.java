@@ -21,14 +21,14 @@ public abstract class TitleScreenMixin extends Screen {
     @Inject(method = "init", at = @At("TAIL"))
     private void addSkinButton(CallbackInfo ci) {
         ButtonWidget skinButton = ButtonWidget.builder(
-            Text.literal("§6§l[ SKIN STUDIO ]"),
+            Text.literal("§6§l✨ SKIN"),
             button -> {
                 MinecraftClient.getInstance().setScreen(
                     new SkinDashboardScreen(this)
                 );
             }
         )
-        .dimensions(this.width - 110, 10, 100, 22)
+        .dimensions(this.width - 70, 10, 60, 22)
         .build();
         
         this.addDrawableChild(skinButton);
