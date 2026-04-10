@@ -4,7 +4,8 @@
     "package": "com.tumhara.mod.mixin",
     "compatibilityLevel": "JAVA_21",
     "mixins": [
-        "TitleScreenMixin"
+        "TitleScreenMixin",
+        "GameMenuMixin"
     ],
     "client": [],
     "injectors": {
