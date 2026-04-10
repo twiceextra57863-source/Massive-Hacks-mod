@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "id": "pvpmod",
   "version": "${version}",
-  "name": "PvP Mod",
-  "description": "Fabric PvP client for 1.21.4",
+  "name": "Massive Hacks",
+  "description": "PvP client with customizable opponent indicators",
   "authors": ["You"],
   "license": "MIT",
   "environment": "*",
@@ -11,6 +11,9 @@
     "main": ["net.yourname.pvpmod.PvPMod"],
     "client": ["net.yourname.pvpmod.PvPModClient"]
   },
+  "mixins": [
+    "pvpmod.mixins.json"
+  ],
   "depends": {
     "fabricloader": ">=0.16.0",
     "minecraft": "~1.21.4",
