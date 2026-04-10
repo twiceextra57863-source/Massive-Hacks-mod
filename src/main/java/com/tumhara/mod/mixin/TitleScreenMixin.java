@@ -21,27 +21,25 @@ public class TitleScreenMixin {
         int x = screen.width / 2 + 104;
         int y = screen.height / 4 + 48 + 72;
         
+        // Change Skin Button
         ButtonWidget skinButton = ButtonWidget.builder(
             Text.literal("§a✦ Change Skin"),
             button -> {
-                try {
-                    MinecraftClient.getInstance().setScreen(
-                        new SkinDashboardScreen(screen)
-                    );
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+                MinecraftClient.getInstance().setScreen(
+                    new SkinDashboardScreen(screen)
+                );
             }
         )
         .dimensions(x, y, buttonWidth, buttonHeight)
         .build();
         
+        // Reset Skin Button
         ButtonWidget resetButton = ButtonWidget.builder(
             Text.literal("§c⟳ Reset Skin"),
             button -> {
                 if (MinecraftClient.getInstance().player != null) {
                     MinecraftClient.getInstance().player.sendMessage(
-                        Text.literal("§aSkin reset requested!"), 
+                        Text.literal("§aFeature coming soon!"), 
                         false
                     );
                 }
@@ -50,8 +48,8 @@ public class TitleScreenMixin {
         .dimensions(x, y + 24, buttonWidth, buttonHeight)
         .build();
         
-        // Use accessor to add buttons
-        ((TitleScreenAccessor) screen).invokeAddDrawableChild(skinButton);
-        ((TitleScreenAccessor) screen).invokeAddDrawableChild(resetButton);
+        // addDrawableChild is PUBLIC in Screen class - direct access
+        screen.addDrawableChild(skinButton);
+        screen.addDrawableChild(resetButton);
     }
 }
