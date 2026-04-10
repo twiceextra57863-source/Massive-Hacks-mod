@@ -6,6 +6,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.texture.NativeImageBackedTexture;
 import net.minecraft.util.Identifier;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -38,14 +39,11 @@ public class SkinChangerClient implements ClientModInitializer {
 
         try (FileInputStream fis = new FileInputStream(skinFile)) {
             NativeImage image = NativeImage.read(fis);
-            
             client.execute(() -> {
                 client.getTextureManager().registerTexture(CUSTOM_SKIN, 
                     new NativeImageBackedTexture(image));
-                
                 SkinChangerConfig.setCurrentSkin(skinFileName);
                 SkinChangerConfig.save();
-                
                 SkinChangerMod.LOGGER.info("Skin loaded: " + skinFileName);
             });
         } catch (IOException e) {
