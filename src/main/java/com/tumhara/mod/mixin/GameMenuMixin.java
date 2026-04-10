@@ -20,10 +20,7 @@ public abstract class GameMenuMixin extends Screen {
 
     @Inject(method = "initWidgets", at = @At("TAIL"))
     private void addSkinButtonToPauseMenu(CallbackInfo ci) {
-        GameMenuScreen screen = (GameMenuScreen) (Object) this;
-        
-        // Button ko ache position pe rakhna - "Back to Game" button ke neeche
-        // "Back to Game" usually y = height/4 + 48 - 16 par hota hai
+        // 'this' is a Screen object because we extended Screen
         int yPosition = this.height / 4 + 48 + 24;
         int xPosition = this.width / 2 - 100;
         
@@ -31,13 +28,14 @@ public abstract class GameMenuMixin extends Screen {
             Text.literal("§6§l✨ SKIN STUDIO"),
             button -> {
                 MinecraftClient.getInstance().setScreen(
-                    new SkinDashboardScreen(screen)
+                    new SkinDashboardScreen(this)
                 );
             }
         )
         .dimensions(xPosition, yPosition, 200, 20)
         .build();
         
-        screen.addDrawableChild(skinButton);
+        // Use 'this' instead of screen variable
+        this.addDrawableChild(skinButton);
     }
 }
