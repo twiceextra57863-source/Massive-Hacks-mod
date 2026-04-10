@@ -19,14 +19,10 @@ public abstract class TitleScreenMixin extends Screen {
 
     @Inject(method = "init", at = @At("TAIL"))
     private void addDashboardButton(CallbackInfo ci) {
-        // Main menu me button add karna
-        int buttonY = this.height / 2 + 48 + 12;
-        
+        int y = this.height / 2 + 48 + 12;
         this.addRenderableWidget(Button.builder(
-                Component.literal("§b§l🎨 Skin Dashboard"),
+                Component.literal("Skin Dashboard"),
                 btn -> this.minecraft.setScreen(new SkinDashboardScreen(this))
-        )
-        .bounds(this.width / 2 - 100, buttonY, 200, 20)
-        .build());
+        ).bounds(this.width / 2 - 100, y, 200, 20).build());
     }
 }
