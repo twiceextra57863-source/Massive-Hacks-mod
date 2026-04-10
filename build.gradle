@@ -1,5 +1,4 @@
 plugins {
-    // ✅ UPDATED: Loom 1.8.13 for 1.21.4 compatibility
     id 'fabric-loom' version '1.8.13'
     id 'maven-publish'
 }
@@ -22,10 +21,6 @@ dependencies {
     mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
-    
-    // Optional dependencies (uncomment if needed):
-    // modImplementation "com.terraformersmc:modmenu:12.0.0-beta.1"
-    // modImplementation "me.shedaniel.cloth:cloth-config-fabric:15.0.140"
 }
 
 loom {
@@ -38,7 +33,10 @@ loom {
         }
     }
     
-    // Optional: Run configurations
+    // ✅ REMOVED: accessWidenerPath line to fix FileNotFoundException
+    // Jab chahiye hoga, uncomment karna + file banana
+    // accessWidenerPath = file("src/main/resources/pvpmod.accesswidener")
+    
     runs {
         client {
             client()
@@ -53,9 +51,6 @@ loom {
             runDir("run")
         }
     }
-    
-    // ✅ Loom 1.8+ compatibility: Disable deprecated features
-    accessWidenerPath = file("src/main/resources/pvpmod.accesswidener")
 }
 
 processResources {
