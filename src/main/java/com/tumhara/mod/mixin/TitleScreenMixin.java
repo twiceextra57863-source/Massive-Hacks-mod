@@ -20,14 +20,16 @@ public abstract class TitleScreenMixin extends Screen {
 
     @Inject(method = "init", at = @At("TAIL"))
     private void addSkinButton(CallbackInfo ci) {
-        int buttonWidth = 100;
-        int buttonHeight = 20;
-        int x = this.width / 2 + 104;
-        int y = this.height / 4 + 48 + 72;
+        int buttonWidth = 120;
+        int buttonHeight = 24;
         
-        // Change Skin Button
+        // Right side buttons positioning
+        int x = this.width - buttonWidth - 24;
+        int y = this.height / 4 + 48;
+        
+        // Main Skin Button with Minecraft style
         ButtonWidget skinButton = ButtonWidget.builder(
-            Text.literal("§a✦ Change Skin"),
+            Text.literal("§6§l✦ SKIN STUDIO"),
             button -> {
                 MinecraftClient.getInstance().setScreen(
                     new SkinDashboardScreen(this)
@@ -37,22 +39,21 @@ public abstract class TitleScreenMixin extends Screen {
         .dimensions(x, y, buttonWidth, buttonHeight)
         .build();
         
-        // Reset Skin Button
+        // Quick Reset Button
         ButtonWidget resetButton = ButtonWidget.builder(
-            Text.literal("§c⟳ Reset Skin"),
+            Text.literal("§c§l⟳ RESET"),
             button -> {
                 if (MinecraftClient.getInstance().player != null) {
                     MinecraftClient.getInstance().player.sendMessage(
-                        Text.literal("§aSkin reset requested!"), 
-                        false
+                        Text.literal("§a✓ Skin reset to default!"), 
+                        true
                     );
                 }
             }
         )
-        .dimensions(x, y + 24, buttonWidth, buttonHeight)
+        .dimensions(x, y + 28, buttonWidth, buttonHeight)
         .build();
         
-        // Now 'this' is a Screen, so addDrawableChild is accessible
         this.addDrawableChild(skinButton);
         this.addDrawableChild(resetButton);
     }
