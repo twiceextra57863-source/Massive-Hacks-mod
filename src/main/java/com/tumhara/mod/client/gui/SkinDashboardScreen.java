@@ -6,14 +6,14 @@ import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.text.Text;
-import net.minecraft.client.network.AbstractClientPlayerEntity;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileWriter;
+import java.io.FileReader;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.google.gson.GsonBuilder;
 
 public class SkinDashboardScreen extends Screen {
@@ -27,30 +27,31 @@ public class SkinDashboardScreen extends Screen {
     private String statusMessage = "§7Welcome to Skin Studio";
     private int statusColor = 0xAAAAAA;
     private boolean isLoading = false;
-    private float rotationAngle = 0;
-    private PlayerEntity previewPlayer;
     private int activeTab = 0;
+    private String currentSkinPreview = "default";
     
-    static {
-        ModelLoader.loadModelConfig();
-    }
+    // Colors
+    private static final int COLOR_BORDER = 0xFFD4AF37;
+    private static final int COLOR_BG = 0xCC1A1A1A;
+    private static final int COLOR_PANEL = 0xEE2D2D2D;
     
     public SkinDashboardScreen(Screen parent) {
         super(Text.literal(""));
         this.parent = parent;
         if (!CONFIG_DIR.exists()) CONFIG_DIR.mkdirs();
-        createPreviewPlayer();
+        loadCurrentSkin();
     }
     
-    private void createPreviewPlayer() {
-        MinecraftClient client = MinecraftClient.getInstance();
-        if (client != null && client.world != null) {
-            // Create a preview player with default skin
-            previewPlayer = new AbstractClientPlayerEntity(client.world, 
-                client.getSession().getProfile()) {
-                @Override
-                public boolean isPartVisible() { return true; }
-            };
+    private void loadCurrentSkin() {
+        if (CURRENT_SKIN_FILE.exists()) {
+            try (FileReader reader = new FileReader(CURRENT_SKIN_FILE)) {
+                JsonObject json = JsonParser.parseReader(reader).getAsJsonObject();
+                if (json.has("current_skin")) {
+                    currentSkinPreview = json.get("current_skin").getAsString();
+                }
+            } catch (Exception e) {
+                LOGGER.error("Failed to load current skin", e);
+            }
         }
     }
     
@@ -61,6 +62,7 @@ public class SkinDashboardScreen extends Screen {
         int centerX = this.width / 2;
         int centerY = this.height / 2;
         
+        // URL Field
         this.urlField = new TextFieldWidget(
             this.textRenderer,
             centerX + 10,
@@ -73,6 +75,7 @@ public class SkinDashboardScreen extends Screen {
         this.urlField.setVisible(true);
         this.addDrawableChild(this.urlField);
         
+        // Username Field
         this.usernameField = new TextFieldWidget(
             this.textRenderer,
             centerX + 10,
@@ -85,7 +88,7 @@ public class SkinDashboardScreen extends Screen {
         this.usernameField.setVisible(false);
         this.addDrawableChild(this.usernameField);
         
-        // Tabs
+        // Tab Buttons
         this.addDrawableChild(ButtonWidget.builder(
             Text.literal(activeTab == 0 ? "§6§l[ URL ]" : "§7[ URL ]"),
             button -> {
@@ -108,7 +111,7 @@ public class SkinDashboardScreen extends Screen {
         
         // Action Buttons
         this.addDrawableChild(ButtonWidget.builder(
-            Text.literal("§a✓ APPLY"),
+            Text.literal("§a✓ APPLY SKIN"),
             button -> applySkin()
         ).dimensions(centerX + 10, centerY + 100, 100, 30).build());
         
@@ -138,14 +141,23 @@ public class SkinDashboardScreen extends Screen {
         statusMessage = "§eApplying skin...";
         statusColor = 0xFFFF55;
         
+        String input = activeTab == 0 ? urlField.getText() : usernameField.getText();
+        
         new Thread(() -> {
             try {
                 Thread.sleep(1000);
                 MinecraftClient.getInstance().execute(() -> {
-                    saveCurrentSkin(activeTab == 0 ? urlField.getText() : usernameField.getText());
+                    saveCurrentSkin(input);
+                    currentSkinPreview = input;
                     statusMessage = "§a✓ Skin applied! Restart to see changes";
                     statusColor = 0x55FF55;
                     isLoading = false;
+                    
+                    if (MinecraftClient.getInstance().player != null) {
+                        MinecraftClient.getInstance().player.sendMessage(
+                            Text.literal("§a✓ Skin changed to §6" + input), true
+                        );
+                    }
                 });
             } catch (Exception e) {
                 MinecraftClient.getInstance().execute(() -> {
@@ -171,8 +183,16 @@ public class SkinDashboardScreen extends Screen {
     }
     
     private void resetSkin() {
-        statusMessage = "§a✓ Reset to default skin";
+        statusMessage = "§a✓ Reset to default Steve skin";
         statusColor = 0x55FF55;
+        currentSkinPreview = "default";
+        saveCurrentSkin("Default Steve");
+        
+        if (MinecraftClient.getInstance().player != null) {
+            MinecraftClient.getInstance().player.sendMessage(
+                Text.literal("§a✓ Skin reset to default!"), true
+            );
+        }
     }
     
     private void openConfigFolder() {
@@ -189,47 +209,46 @@ public class SkinDashboardScreen extends Screen {
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         // Background
-        context.fill(0, 0, this.width, this.height, ModelLoader.getBackgroundColor());
+        context.fill(0, 0, this.width, this.height, COLOR_BG);
         
         int centerX = this.width / 2;
         int centerY = this.height / 2;
         
-        // Animated border
+        // Animated border glow
         long time = System.currentTimeMillis();
         float glow = (float) (Math.sin(time / 500.0) * 0.3 + 0.7);
-        int borderColor = mixColor(ModelLoader.getBorderColor(), 0xFFFFFFFF, glow);
+        int borderColor = mixColor(COLOR_BORDER, 0xFFFFFFFF, glow);
         
-        // Main Panel - Left side for model, Right side for controls
-        context.fill(centerX - 200, centerY - 120, centerX + 200, centerY + 220, 0xEE2D2D2D);
+        // Main Panel
+        context.fill(centerX - 200, centerY - 120, centerX + 200, centerY + 220, COLOR_PANEL);
         drawBorder(context, centerX - 200, centerY - 120, 400, 340, borderColor);
         
         // Title
-        drawShinyText(context, "§6§l" + ModelLoader.getTitleText(), centerX, centerY - 95, 1.5f);
+        drawShinyText(context, "§6§lSKIN STUDIO", centerX, centerY - 95, 1.5f);
         context.drawCenteredTextWithShadow(this.textRenderer, 
             Text.literal("§7Change your Minecraft skin"), centerX, centerY - 75, 0xAAAAAA);
-        context.fill(centerX - 170, centerY - 60, centerX + 170, centerY - 59, ModelLoader.getBorderColor());
+        context.fill(centerX - 170, centerY - 60, centerX + 170, centerY - 59, COLOR_BORDER);
         
-        // ===== LEFT SIDE: 3D PLAYER MODEL =====
+        // ===== LEFT SIDE: SKIN PREVIEW =====
         context.drawTextWithShadow(this.textRenderer, 
-            Text.literal("§6◆ SKIN PREVIEW"), centerX - 180, centerY - 45, ModelLoader.getBorderColor());
+            Text.literal("§6◆ SKIN PREVIEW"), centerX - 180, centerY - 45, COLOR_BORDER);
         
-        // Model background
+        // Preview background
         context.fill(centerX - 180, centerY - 35, centerX - 20, centerY + 105, 0xFF333333);
         drawBorder(context, centerX - 180, centerY - 35, 160, 140, 0xFF888888);
         
-        // Render 3D Player Model
-        if (previewPlayer != null) {
-            ModelLoader.renderPlayerModel(context.getMatrices(), centerX - 100, centerY + 10, 60, previewPlayer, rotationAngle);
-            rotationAngle += 2;
-        }
+        // Skin preview - Draw a simple head representation
+        drawSkinPreview(context, centerX - 100, centerY + 5, 50);
         
-        // Model label
+        // Current skin name
+        String displayName = currentSkinPreview.length() > 20 ? 
+            currentSkinPreview.substring(0, 17) + "..." : currentSkinPreview;
         context.drawCenteredTextWithShadow(this.textRenderer, 
-            Text.literal("§73D Model Preview"), centerX - 100, centerY + 80, 0x888888);
+            Text.literal("§7" + displayName), centerX - 100, centerY + 75, 0x888888);
         
         // ===== RIGHT SIDE: CONTROLS =====
         context.drawTextWithShadow(this.textRenderer, 
-            Text.literal("§6◆ SELECT SOURCE"), centerX + 20, centerY - 45, ModelLoader.getBorderColor());
+            Text.literal("§6◆ SELECT SOURCE"), centerX + 20, centerY - 45, COLOR_BORDER);
         
         context.drawTextWithShadow(this.textRenderer, 
             Text.literal(activeTab == 0 ? "§7▸ Skin URL:" : "§7▸ Username:"), 
@@ -252,13 +271,32 @@ public class SkinDashboardScreen extends Screen {
         super.render(context, mouseX, mouseY, delta);
     }
     
+    private void drawSkinPreview(DrawContext context, int x, int y, int size) {
+        // Draw head outline
+        context.fill(x - size/2, y - size/2, x + size/2, y + size/2, 0xFF8B6946);
+        drawBorder(context, x - size/2, y - size/2, size, size, 0xFFD4AF37);
+        
+        // Draw face features
+        context.fill(x - size/4, y - size/6, x - size/8, y + size/6, 0xFFFFFFFF);
+        context.fill(x + size/8, y - size/6, x + size/4, y + size/6, 0xFFFFFFFF);
+        
+        // Smile
+        context.fill(x - size/4, y + size/8, x + size/4, y + size/8 + 2, 0xFFFFFFFF);
+        
+        // Hat layer
+        context.fill(x - size/2, y - size/2 - 4, x + size/2, y - size/2, 0xFF4A2A1A);
+        
+        // Label
+        context.drawCenteredTextWithShadow(this.textRenderer, 
+            Text.literal("§7Skin Preview"), x, y + size/2 + 8, 0x888888);
+    }
+    
     private void drawBorder(DrawContext context, int x, int y, int width, int height, int color) {
         context.fill(x, y, x + width, y + 2, color);
         context.fill(x, y + height - 2, x + width, y + height, color);
         context.fill(x, y, x + 2, y + height, color);
         context.fill(x + width - 2, y, x + width, y + height, color);
         
-        // Corner accents
         context.fill(x, y, x + 15, y + 1, 0xFFFFFFFF);
         context.fill(x + width - 15, y, x + width, y + 1, 0xFFFFFFFF);
         context.fill(x, y + height - 1, x + 15, y + height, 0xFFFFFFFF);
@@ -270,7 +308,7 @@ public class SkinDashboardScreen extends Screen {
         matrices.push();
         matrices.scale(scale, scale, 1.0f);
         context.drawCenteredTextWithShadow(this.textRenderer, 
-            Text.literal(text), (int)(x / scale), (int)(y / scale), ModelLoader.getBorderColor());
+            Text.literal(text), (int)(x / scale), (int)(y / scale), COLOR_BORDER);
         matrices.pop();
     }
     
