@@ -4,7 +4,6 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.entity.player.PlayerEntity;
 import net.yourname.pvpmod.config.ModConfig;
-import net.yourname.pvpmod.indicator.PlayerIndicator.IndicatorState;
 
 public class StatusBarRenderer {
     
@@ -17,11 +16,11 @@ public class StatusBarRenderer {
         ctx.fill(x - w/2 - 1, y - 1, x + w/2 + 1, y + h + 1, 
                 cfg.backgroundColor | 0x90000000);
         
-        // Health color
+        // Color selection
         int color = getColorForHealth(health, cfg);
-        
-        // Filled portion
         int filled = (int) (w * health);
+        
+        // Health fill
         ctx.fill(x - w/2, y, x - w/2 + filled, y + h, color | 0xFF000000);
         
         // Border
@@ -32,16 +31,9 @@ public class StatusBarRenderer {
         
         // Health text
         if (cfg.showHealthText) {
-            String hp = String.valueOf((int) (health * 20)); // Hearts
+            String hp = String.valueOf((int) (health * 20));
             int tw = mc.textRenderer.getWidth(hp);
             ctx.drawText(mc.textRenderer, hp, x - tw/2, y - 11, 0xFFFFFF, true);
-        }
-        
-        // Player name (optional)
-        if (cfg.showPlayerName) {
-            String name = player.getName().getString();
-            int tw = mc.textRenderer.getWidth(name);
-            ctx.drawText(mc.textRenderer, name, x - tw/2, y + h + 3, 0xDDDDDD, true);
         }
     }
     
