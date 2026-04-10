@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "id": "pvpmod",
+  "version": "${version}",
+  "name": "PvP Mod",
+  "description": "A Fabric PvP client mod for 1.21.4",
+  "authors": ["YourName"],
+  "contact": {
+    "sources": "https://github.com/yourname/pvpmod"
+  },
+  "license": "MIT",
+  "icon": "assets/pvpmod/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": ["net.yourname.pvpmod.PvPMod"],
+    "client": ["net.yourname.pvpmod.PvPModClient"]
+  },
+  "depends": {
+    "fabricloader": ">=0.16.0",
+    "minecraft": "~1.21.4",
+    "java": ">=21",
+    "fabric-api": "*"
+  },
+  "suggests": {
+    "modmenu": "*"
+  },
+  "accessWidener": "pvpmod.accesswidener"
+}
