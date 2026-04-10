@@ -1,5 +1,6 @@
 plugins {
-    id 'fabric-loom' version "${project.loom_version}"
+    // ✅ FIXED: Literal string version (no ${project.xxx} allowed here)
+    id 'fabric-loom' version '1.6.4'
     id 'maven-publish'
 }
 
@@ -11,7 +12,8 @@ base {
 }
 
 repositories {
-    // Yahan custom repos add kar sakte ho (Modrinth, CurseForge, etc.)
+    // Add custom repos here if needed (Modrinth, CurseForge, etc.)
+    // maven { url 'https://api.modrinth.com/maven' }
 }
 
 dependencies {
@@ -19,20 +21,43 @@ dependencies {
     mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+    
+    // Optional: ModMenu for config GUI (uncomment if needed)
+    // modImplementation "com.terraformersmc:modmenu:12.0.0-beta.1"
+    // Optional: Cloth Config for settings (uncomment if needed)
+    // modImplementation "me.shedaniel.cloth:cloth-config-fabric:15.0.140"
 }
 
 loom {
     splitEnvironmentSourceSets()
+    
     mods {
         "pvpmod" {
             sourceSet sourceSets.main
             sourceSet sourceSets.client
         }
     }
+    
+    // Optional: Run configs for easier testing
+    runs {
+        client {
+            client()
+            configName = "PvP Client"
+            ideConfigGenerated(true)
+            runDir("run")
+        }
+        server {
+            server()
+            configName = "PvP Server"
+            ideConfigGenerated(true)
+            runDir("run")
+        }
+    }
 }
 
 processResources {
     inputs.property "version", project.version
+    
     filesMatching("fabric.mod.json") {
         expand "version": project.version
     }
@@ -51,5 +76,17 @@ java {
 jar {
     from("LICENSE") {
         rename { "${it}_${project.base.archivesName.get()}" }
+    }
+}
+
+// Optional: Publish config (remove if not using Maven)
+publishing {
+    publications {
+        create('mavenJava', MavenPublication) {
+            from components.java
+        }
+    }
+    repositories {
+        // Configure your publishing repository here
     }
 }
