@@ -19,7 +19,6 @@ public abstract class TitleScreenMixin extends Screen {
     @Inject(method = "init", at = @At("RETURN"))
     private void addSkinButton(CallbackInfo ci) {
         int y = this.height / 4 + 48;
-        
         this.addDrawableChild(ButtonWidget.builder(
             Text.literal("Change Skin"), 
             button -> {
