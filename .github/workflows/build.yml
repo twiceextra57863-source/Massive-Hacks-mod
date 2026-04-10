@@ -1,4 +1,3 @@
-# .github/workflows/build.yml
 name: Build Mod
 
 on: [push, pull_request]
@@ -7,7 +6,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Repository
+      - name: Checkout Code
         uses: actions/checkout@v4
 
       - name: Setup Java 21
@@ -15,20 +14,21 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
-          cache: 'gradle'  # ✅ Gradle cache enable karo
+          cache: 'gradle'
 
-      - name: Setup Gradle Cache
+      - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
-        with:
-          cache-read-only: ${{ github.ref != 'refs/heads/main' }}
 
-      - name: Make Gradle Wrapper Executable
+      - name: Make Gradlew Executable
         run: chmod +x ./gradlew
 
-      - name: Build with Gradle
+      - name: Clean + Refresh Dependencies
+        run: ./gradlew clean --refresh-dependencies
+
+      - name: Build Mod
         run: ./gradlew build --no-daemon --stacktrace
 
-      - name: Upload Build Artifacts
+      - name: Upload JAR
         uses: actions/upload-artifact@v4
         with:
           name: mod-jar
