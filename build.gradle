@@ -1,6 +1,6 @@
 plugins {
-    // ✅ FIXED: Literal string version (no ${project.xxx} allowed here)
-    id 'fabric-loom' version '1.6.4'
+    // ✅ UPDATED: Loom 1.8.13 for 1.21.4 compatibility
+    id 'fabric-loom' version '1.8.13'
     id 'maven-publish'
 }
 
@@ -12,8 +12,9 @@ base {
 }
 
 repositories {
-    // Add custom repos here if needed (Modrinth, CurseForge, etc.)
+    // Add custom repos here if needed
     // maven { url 'https://api.modrinth.com/maven' }
+    // maven { url 'https://maven.terraformersmc.com/releases/' }
 }
 
 dependencies {
@@ -22,9 +23,8 @@ dependencies {
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
     
-    // Optional: ModMenu for config GUI (uncomment if needed)
+    // Optional dependencies (uncomment if needed):
     // modImplementation "com.terraformersmc:modmenu:12.0.0-beta.1"
-    // Optional: Cloth Config for settings (uncomment if needed)
     // modImplementation "me.shedaniel.cloth:cloth-config-fabric:15.0.140"
 }
 
@@ -38,7 +38,7 @@ loom {
         }
     }
     
-    // Optional: Run configs for easier testing
+    // Optional: Run configurations
     runs {
         client {
             client()
@@ -53,6 +53,9 @@ loom {
             runDir("run")
         }
     }
+    
+    // ✅ Loom 1.8+ compatibility: Disable deprecated features
+    accessWidenerPath = file("src/main/resources/pvpmod.accesswidener")
 }
 
 processResources {
@@ -79,7 +82,6 @@ jar {
     }
 }
 
-// Optional: Publish config (remove if not using Maven)
 publishing {
     publications {
         create('mavenJava', MavenPublication) {
@@ -87,6 +89,6 @@ publishing {
         }
     }
     repositories {
-        // Configure your publishing repository here
+        // Configure publishing repo here if needed
     }
 }
