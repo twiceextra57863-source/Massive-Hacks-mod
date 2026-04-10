@@ -21,8 +21,7 @@ public class TitleScreenMixin {
         int x = screen.width / 2 + 104;
         int y = screen.height / 4 + 48 + 72;
         
-        // Use addDrawable instead of addDrawableChild (public method)
-        screen.addDrawable(ButtonWidget.builder(
+        ButtonWidget skinButton = ButtonWidget.builder(
             Text.literal("§a✦ Change Skin"),
             button -> {
                 try {
@@ -30,14 +29,14 @@ public class TitleScreenMixin {
                         new SkinDashboardScreen(screen)
                     );
                 } catch (Exception e) {
-                    System.err.println("Failed to open skin dashboard: " + e);
+                    e.printStackTrace();
                 }
             }
         )
         .dimensions(x, y, buttonWidth, buttonHeight)
-        .build());
+        .build();
         
-        screen.addDrawable(ButtonWidget.builder(
+        ButtonWidget resetButton = ButtonWidget.builder(
             Text.literal("§c⟳ Reset Skin"),
             button -> {
                 if (MinecraftClient.getInstance().player != null) {
@@ -49,6 +48,10 @@ public class TitleScreenMixin {
             }
         )
         .dimensions(x, y + 24, buttonWidth, buttonHeight)
-        .build());
+        .build();
+        
+        // Use accessor to add buttons
+        ((TitleScreenAccessor) screen).invokeAddDrawableChild(skinButton);
+        ((TitleScreenAccessor) screen).invokeAddDrawableChild(resetButton);
     }
 }
