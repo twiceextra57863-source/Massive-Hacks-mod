@@ -10,9 +10,6 @@ import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.mojang.blaze3d.systems.RenderSystem;
-import net.minecraft.client.render.DiffuseLighting;
-import org.joml.Vector3f;
 import java.io.File;
 
 public class SkinDashboardScreen extends Screen {
@@ -29,14 +26,11 @@ public class SkinDashboardScreen extends Screen {
     private PlayerEntity previewPlayer;
     private int activeTab = 0;
     
-    static {
-        ModelLoader.loadModelConfig();
-    }
-    
     public SkinDashboardScreen(Screen parent) {
         super(Text.literal(""));
         this.parent = parent;
         if (!CONFIG_DIR.exists()) CONFIG_DIR.mkdirs();
+        ModelLoader.loadModelConfig();
         createPreviewPlayer();
     }
     
@@ -79,7 +73,6 @@ public class SkinDashboardScreen extends Screen {
         this.usernameField.setVisible(false);
         this.addDrawableChild(this.usernameField);
         
-        // Tabs
         this.addDrawableChild(ButtonWidget.builder(
             Text.literal(activeTab == 0 ? "§6§l[ URL ]" : "§7[ URL ]"),
             button -> {
@@ -100,7 +93,6 @@ public class SkinDashboardScreen extends Screen {
             }
         ).dimensions(centerX + 5, centerY + 25, 115, 24).build());
         
-        // Action Buttons
         this.addDrawableChild(ButtonWidget.builder(
             Text.literal("§a✓ APPLY SKIN"),
             button -> applySkin()
@@ -152,22 +144,15 @@ public class SkinDashboardScreen extends Screen {
     
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        // Background from JSON config
         context.fill(0, 0, this.width, this.height, ModelLoader.getBackgroundColor());
         
         int centerX = this.width / 2;
         int centerY = this.height / 2;
         
-        // Main Panel
         context.fill(centerX - 160, centerY - 110, centerX + 160, centerY + 190, 0xEE2D2D2D);
-        
-        // Border from JSON config
         drawBorder(context, centerX - 160, centerY - 110, 320, 300, ModelLoader.getBorderColor());
-        
-        // Title from JSON config
         drawShinyText(context, "§6§l" + ModelLoader.getTitleText(), centerX, centerY - 80, 1.5f);
         
-        // Subtitle
         context.drawCenteredTextWithShadow(
             this.textRenderer,
             Text.literal("§7Change your Minecraft skin"),
@@ -176,16 +161,13 @@ public class SkinDashboardScreen extends Screen {
             0xAAAAAA
         );
         
-        // Divider
         context.fill(centerX - 130, centerY - 45, centerX + 130, centerY - 44, ModelLoader.getBorderColor());
         
-        // 3D Player Model Render with JSON config
         if (previewPlayer != null) {
             ModelLoader.renderCustomModel(context.getMatrices(), centerX, centerY - 20, 80, previewPlayer, rotationAngle);
             rotationAngle += 2;
         }
         
-        // Input Label
         context.drawTextWithShadow(
             this.textRenderer,
             Text.literal("§6◆ INPUT METHOD:"),
@@ -202,10 +184,8 @@ public class SkinDashboardScreen extends Screen {
             0xCCCCCC
         );
         
-        // Status Bar
         context.fill(centerX - 140, centerY + 170, centerX + 140, centerY + 195, 0x88000000);
         
-        // Status Message
         context.drawCenteredTextWithShadow(
             this.textRenderer,
             Text.literal(statusMessage),
@@ -214,12 +194,10 @@ public class SkinDashboardScreen extends Screen {
             statusColor
         );
         
-        // Loading Animation
         if (isLoading) {
             drawLoadingAnimation(context, centerX + 130, centerY + 75);
         }
         
-        // Hover Effects
         renderHoverEffects(context, mouseX, mouseY, centerX, centerY);
         
         super.render(context, mouseX, mouseY, delta);
@@ -231,7 +209,6 @@ public class SkinDashboardScreen extends Screen {
         context.fill(x, y, x + 2, y + height, color);
         context.fill(x + width - 2, y, x + width, y + height, color);
         
-        // Corner accents
         context.fill(x, y, x + 10, y + 1, 0xFFFFFFFF);
         context.fill(x + width - 10, y, x + width, y + 1, 0xFFFFFFFF);
         context.fill(x, y + height - 1, x + 10, y + height, 0xFFFFFFFF);
