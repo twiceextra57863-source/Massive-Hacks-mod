@@ -1,40 +1,30 @@
-package net.yourname.pvpmod;
+package net.yourname.pvpmod.mixin;
 
-import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.Camera;
-import net.minecraft.client.render.GameRenderer;
-import org.joml.Matrix4f;
-import net.yourname.pvpmod.config.ConfigManager;
-import net.yourname.pvpmod.indicator.PlayerIndicator;
+import net.minecraft.client.gui.screen.GameMenuScreen;
+import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
+import net.yourname.pvpmod.screen.DashboardScreen;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-public class PvPModClient implements ClientModInitializer {
+@Mixin(GameMenuScreen.class)
+public class PauseScreenMixin {
+    // ✅ DELETE the PvPModClient class that was accidentally pasted here!
     
-    @Override
-    public void onInitializeClient() {
-        ConfigManager.get();
+    @Inject(method = "init", at = @At("TAIL"))
+    private void addDashboardButton(CallbackInfo ci) {
+        GameMenuScreen screen = (GameMenuScreen) (Object) this;
         
-        // Register HUD renderer
-        HudRenderCallback.EVENT.register((ctx, tickDelta) -> {
-            MinecraftClient mc = MinecraftClient.getInstance();
-            if (mc.options.hudHidden || mc.world == null || mc.player == null) return;
-            
-            Camera camera = mc.gameRenderer.getCamera();
-            if (camera.isThirdPerson()) return;
-            
-            // ✅ Get matrices properly for 1.21.4
-            GameRenderer renderer = mc.gameRenderer;
-            Matrix4f view = new Matrix4f(renderer.getBacklight().getModelViewMatrix());
-            Matrix4f proj = new Matrix4f(renderer.getProjectionMatrix());
-            
-            PlayerIndicator.renderAll(ctx, mc, camera, view, proj);
-        });
+        MinecraftClient mc = ((ScreenAccessor) screen).getPvpModClient();
+        if (mc == null) return;
         
-        // Clear cache on world change
-        ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            if (client.world == null) PlayerIndicator.clearCache();
-        });
+        screen.addDrawableChild(ButtonWidget.builder(
+                Text.literal("⚙️ PvP Settings").formatted(Formatting.GOLD),
+                btn -> mc.setScreen(new DashboardScreen(screen)))
+            .dimensions(screen.width / 2 - 100, screen.height / 4 + 120, 200, 20)
+            .build());
     }
 }
