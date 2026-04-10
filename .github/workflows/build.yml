@@ -15,8 +15,10 @@ jobs:
       actions: write
 
     env:
-      # ✅ Extra memory for Loom 1.8+ in CI
+      # Extra memory for Loom
       ORG_GRADLE_PROJECT_org_gradle_jvmargs: -Xmx4G
+      # Disable config cache in CI too
+      ORG_GRADLE_PROJECT_org_gradle_configuration_cache: false
 
     steps:
       - name: Checkout Repository
@@ -36,7 +38,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build with Gradle
-        run: ./gradlew build --no-daemon --stacktrace
+        run: ./gradlew build --no-daemon
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
