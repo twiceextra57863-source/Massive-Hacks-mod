@@ -21,7 +21,8 @@ public class TitleScreenMixin {
         int x = screen.width / 2 + 104;
         int y = screen.height / 4 + 48 + 72;
         
-        screen.addDrawableChild(ButtonWidget.builder(
+        // Use addDrawable instead of addDrawableChild (public method)
+        screen.addDrawable(ButtonWidget.builder(
             Text.literal("§a✦ Change Skin"),
             button -> {
                 try {
@@ -36,7 +37,7 @@ public class TitleScreenMixin {
         .dimensions(x, y, buttonWidth, buttonHeight)
         .build());
         
-        screen.addDrawableChild(ButtonWidget.builder(
+        screen.addDrawable(ButtonWidget.builder(
             Text.literal("§c⟳ Reset Skin"),
             button -> {
                 if (MinecraftClient.getInstance().player != null) {
