@@ -28,7 +28,7 @@ public abstract class TitleScreenMixin extends Screen {
                 );
             }
         )
-        .dimensions(this.width - 70, 10, 60, 22)
+        .dimensions(this.width - 65, 10, 55, 22)
         .build();
         
         this.addDrawableChild(skinButton);
