@@ -10,25 +10,26 @@ base { archivesName = project.archives_base_name }
 repositories {
     mavenCentral()
     maven { url = 'https://maven.fabricmc.net/' }
-    maven { url = 'https://maven.shedaniel.me/' }
-    maven { url = 'https://maven.terraformersmc.com/' }
+    maven { url = 'https://maven.shedaniel.me/' }      // Cloth Config
+    maven { url = 'https://maven.terraformersmc.com/' } // Mod Menu
 }
 
 dependencies {
+    // Minecraft + Mappings
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
     mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
+    
+    // Fabric Loader + API
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
     
-    // Optional deps
+    // Optional: Cloth Config + Mod Menu
     modApi "me.shedaniel.cloth:cloth-config-fabric:15.0.140"
     modImplementation "com.terraformersmc:modmenu:11.0.1"
     
-    // ✅ Mixin Annotation Processor (Zaroori!)
-    annotationProcessor "org.spongepowered:mixin:0.8.5:processor"
+    // ✅ NO MANUAL MIXIN DEPENDENCY - Loom handles it!
 }
 
-// ✅ JAVA CONFIG
 java {
     sourceCompatibility = JavaVersion.VERSION_21
     targetCompatibility = JavaVersion.VERSION_21
@@ -40,7 +41,7 @@ tasks.withType(JavaCompile).configureEach {
     it.options.encoding = 'UTF-8'
 }
 
-// ✅ LOOM CONFIG (Ye add karna tha!)
+// ✅ LOOM CONFIG (Zaroori hai client classes ke liye)
 loom {
     splitEnvironmentSourceSets()
     mods {
