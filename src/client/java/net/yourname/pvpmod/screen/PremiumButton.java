@@ -3,9 +3,11 @@ package net.yourname.pvpmod.screen;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.ClickableWidget;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.MathHelper;
+
+// ✅ Import the nested OnPress interface
+import net.minecraft.client.gui.widget.ButtonWidget.OnPress;
 
 public class PremiumButton extends ButtonWidget {
     
@@ -41,10 +43,7 @@ public class PremiumButton extends ButtonWidget {
         }
         scale = MathHelper.lerp(delta * 0.15f, scale, targetScale);
         
-        // Click ripple effect
-        if (isPressed() && !wasPressed) {
-            // Could add particle here
-        }
+        if (isPressed() && !wasPressed) { /* ripple effect placeholder */ }
         wasPressed = isPressed();
         
         int renderX = getX() + (int) ((width - width * scale) / 2);
@@ -77,7 +76,7 @@ public class PremiumButton extends ButtonWidget {
     
     public static class Builder {
         private final Text message;
-        private final OnPress onPress;
+        private final OnPress onPress; // ✅ Use imported type
         private final int baseColor, hoverColor, pressColor;
         private int x, y, width = 200, height = 20;
         
