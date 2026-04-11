@@ -1,5 +1,6 @@
 package net.yourname.pvpmod.mixin;
 
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.GameMenuScreen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.text.Text;
@@ -12,19 +13,17 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(GameMenuScreen.class)
 public class PauseScreenMixin {
-    // ✅ DELETE the PvPModClient class that was accidentally pasted here!
     
     @Inject(method = "init", at = @At("TAIL"))
-    private void addDashboardButton(CallbackInfo ci) {
+    private void init(CallbackInfo ci) {
         GameMenuScreen screen = (GameMenuScreen) (Object) this;
+        MinecraftClient mc = MinecraftClient.getInstance();
         
-        MinecraftClient mc = ((ScreenAccessor) screen).getPvpModClient();
-        if (mc == null) return;
-        
-        screen.addDrawableChild(ButtonWidget.builder(
-                Text.literal("⚙️ PvP Settings").formatted(Formatting.GOLD),
-                btn -> mc.setScreen(new DashboardScreen(screen)))
-            .dimensions(screen.width / 2 - 100, screen.height / 4 + 120, 200, 20)
+        screen.addDrawableChild(PremiumButton.builder(
+                Text.literal("⚙️ PvP Settings").formatted(Formatting.AQUA, Formatting.BOLD),
+                btn -> mc.setScreen(new DashboardScreen(screen)),
+                0xFF4040FF, 0xFF6060FF, 0xFF202080)
+            .dimensions(screen.width / 2 - 100, screen.height / 4 + 120, 200, 24)
             .build());
     }
 }
