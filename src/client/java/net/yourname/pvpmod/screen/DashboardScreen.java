@@ -203,60 +203,66 @@ public class DashboardScreen extends Screen {
         }
     }
     
-    // ===== PREMIUM SLIDER =====
-    private abstract static class PremiumSlider extends net.minecraft.client.gui.widget.AbstractSliderWidget {
-        protected final String prefix;
-        private float hoverAlpha = 0f;
-        
-        PremiumSlider(int x, int y, int width, int height, String prefix, double value) {
-            super(x, y, width, height, Text.empty(), value);
-            this.prefix = prefix;
-        }
-        
-        @Override
-        protected void renderWidget(DrawContext ctx, int mouseX, int mouseY, float delta) {
-            // Smooth hover animation
-            boolean hovered = mouseX >= getX() && mouseX < getX() + width && 
-                             mouseY >= getY() && mouseY < getY() + height;
-            hoverAlpha = hovered ? Math.min(1f, hoverAlpha + delta * 0.1f) 
-                                : Math.max(0f, hoverAlpha - delta * 0.1f);
-            
-            // Track background
-            ctx.fill(getX(), getY() + height/2 - 2, getX() + width, getY() + height/2 + 2, 0xFF303050);
-            
-            // Filled portion
-            int fillW = (int) (value * width);
-            ctx.fill(getX(), getY() + height/2 - 2, getX() + fillW, getY() + height/2 + 2, 0xFF6060FF);
-            
-            // Thumb
-            int thumbX = getX() + (int) (value * width);
-            ctx.fill(thumbX - 8, getY() + 2, thumbX + 8, getY() + height - 2, 0xFF4040FF);
-            ctx.drawHorizontalLine(thumbX - 8, thumbX + 8, getY() + height/2, 0xFFFFFFFF);
-            
-            // Hover glow
-            if (hoverAlpha > 0) {
-                ctx.fill(getX() - 2, getY() - 2, getX() + width + 2, getY() + height + 2, 
-                        (int) (hoverAlpha * 40) << 24 | 0x004040FF);
-            }
-            
-            // Label
-            String text = prefix + ": " + getDisplayValue();
-            ctx.drawCenteredTextWithShadow(textRenderer, text, getX() + width/2, getY() + (height - 8)/2, 0xFFFFFF);
-        }
-        
-        protected abstract String getDisplayValue();
-        
-        @Override
-        public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
-            if (active && visible && button == 0) {
-                value = Math.max(0, Math.min(1, (mouseX - getX()) / width));
-                applyValue();
-                updateMessage();
-                return true;
-            }
-            return false;
-        }
+    // ✅ REPLACE the abstract PremiumSlider class with this concrete SliderWidget-based version:
+private abstract static class PremiumSlider extends SliderWidget {
+    protected final String prefix;
+    
+    PremiumSlider(int x, int y, int width, int height, String prefix, double value) {
+        super(x, y, width, height, Text.empty(), value);
+        this.prefix = prefix;
     }
+    
+    @Override
+    protected void updateMessage() {
+        setMessage(Text.literal(prefix + ": " + getDisplayValue()));
+    }
+    
+    @Override
+    protected void applyValue() {
+        // Subclasses override this
+    }
+    
+    protected abstract String getDisplayValue();
+    
+    @Override
+    public void renderWidget(DrawContext ctx, int mouseX, int mouseY, float delta) {
+        // Custom glass-style rendering
+        boolean hovered = mouseX >= getX() && mouseX < getX() + width && 
+                         mouseY >= getY() && mouseY < getY() + height;
+        
+        // Track background
+        ctx.fill(getX(), getY() + height/2 - 2, getX() + width, getY() + height/2 + 2, 0xFF303050);
+        
+        // Filled portion
+        int fillW = (int) (value * width);
+        ctx.fill(getX(), getY() + height/2 - 2, getX() + fillW, getY() + height/2 + 2, 0xFF6060FF);
+        
+        // Thumb
+        int thumbX = getX() + (int) (value * width);
+        ctx.fill(thumbX - 8, getY() + 2, thumbX + 8, getY() + height - 2, 0xFF4040FF);
+        ctx.drawHorizontalLine(thumbX - 8, thumbX + 8, getY() + height/2, 0xFFFFFFFF);
+        
+        // Hover glow
+        if (hovered) {
+            ctx.fill(getX() - 2, getY() - 2, getX() + width + 2, getY() + height + 2, 0x20FFFFFF);
+        }
+        
+        // Label
+        ctx.drawCenteredTextWithShadow(textRenderer, getMessage(), 
+            getX() + width/2, getY() + (height - 8)/2, 0xFFFFFF);
+    }
+    
+    @Override
+    public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
+        if (active && visible && button == 0) {
+            value = Math.max(0, Math.min(1, (mouseX - getX()) / width));
+            applyValue();
+            updateMessage();
+            return true;
+        }
+        return false;
+    }
+}
     
     // ===== PARTICLE CLASS =====
     private static class Particle {
